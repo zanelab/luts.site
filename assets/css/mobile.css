@@ -1,9 +1,3 @@
-@media (hover: none) {
-  .mouse-cursor {
-    display: none !important;
-  }
-}
-
 @media screen and (max-width: 1360px) {
   .portfolio-by-category .left-side .text {
     margin-top: -100px;

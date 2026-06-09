@@ -11,12 +11,295 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@200;300;400;500;600;700&family=IBM+Plex+Sans:wght@100;200;300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Theme CSS -->
+    <!-- Additional CSS (loaded first so theme-css can override) -->
+    <link rel='stylesheet' id='pt-addons-css' href='/assets/plugins/pt-sansara-shortcodes/include/css/pt-addons.css' type='text/css' media='all' />
+
+    <!-- Theme CSS from data file -->
     {% for css in site.data.theme-css %}
     <link rel="stylesheet" href="{{ css }}">
     {% endfor %}
+
+    <!-- Additional CSS not in theme-css -->
+    <link rel='stylesheet' id='owl-carousel-css-css' href='/assets/css/owl.carousel.css' type='text/css' media='all' />
+    <link rel='stylesheet' id='sansara-custom-style-css' href='/assets/css/custom_script.css' type='text/css' media='all' />
+    <link rel='stylesheet' id='js_composer_front-css' href='/assets/plugins/js_composer/assets/css/js_composer.min.css' type='text/css' media='all' />
+
+    <!-- Theme dynamic CSS -->
+    <style id="sansara_theme-dynamic-css" title="dynamic-css" class="redux-options-output">
+        .site-header .logo img,
+        .side-header .logo img,
+        .site-header .logo a,
+        .side-header .logo a {
+            width: 135px;
+        }
+        body {
+            font-family: IBM Plex Sans, Arial, Helvetica, sans-serif;
+            font-weight: 400;
+            font-size: 16px;
+        }
+        h1, .h1 { font-family: IBM Plex Sans, Arial, Helvetica, sans-serif; font-weight: 700; font-size: 60px; }
+        h2, .h2 { font-family: IBM Plex Sans, Arial, Helvetica, sans-serif; font-weight: 700; font-size: 48px; }
+        h3, .h3 { font-family: IBM Plex Sans, Arial, Helvetica, sans-serif; font-weight: 700; font-size: 36px; }
+        h4, .h4 { font-family: IBM Plex Sans, Arial, Helvetica, sans-serif; font-weight: 700; font-size: 30px; }
+        h5, .h5 { font-family: IBM Plex Sans, Arial, Helvetica, sans-serif; font-weight: 700; font-size: 24px; }
+        h6, .h6 { font-family: IBM Plex Sans, Arial, Helvetica, sans-serif; font-weight: 700; font-size: 18px; }
+        .site-footer .logo img { width: 96px; }
+    </style>
 </head>
 <body class="{{ page.body_class }}">
     {{ content }}
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-migrate/1.4.1/jquery-migrate.min.js"></script>
+
+    <!-- Theme JS -->
+    <script src="/assets/js/imagesloaded.min.js"></script>
+    <script src="/assets/plugins/js_composer/assets/lib/bower/isotope/dist/isotope.pkgd.min.js"></script>
+    <script src="/assets/js/owl.carousel.min.js"></script>
+    <script src="/assets/js/owl.carousel.js"></script>
+    <script src="/assets/js/script.js"></script>
+    <script src="/assets/js/scripts-pt.js"></script>
+    <script src="/assets/plugins/pt-sansara-shortcodes/include/js/plugins.js"></script>
+    <script src="/assets/plugins/pt-sansara-shortcodes/include/js/scripts.js"></script>
+    <script src="/assets/plugins/pt-sansara-shortcodes/include/js/jquery.touchSwipe.min.js"></script>
+    <script src="/assets/plugins/pt-sansara-shortcodes/include/js/load-posts.js"></script>
+    <script src="/assets/js/jquery.countdown.js"></script>
+    <script src="/assets/js/jquery.justifiedGallery.js"></script>
+    <script src="/assets/js/jquery.sticky-kit.min.js"></script>
+    <script src="/assets/js/jquery.touchSwipe.min.js"></script>
+    <script src="/assets/js/js_composer_front.min.js"></script>
+    <script src="/assets/js/skip-link-focus-fix.js"></script>
+
+    <!-- Init scripts - Full page scroll -->
+    <script>
+    jQuery(document).ready(function(jQuery) {
+        if (jQuery.fn.pt_full_page) {
+            jQuery('.fc-area-5b1a8a9d8d2d5').pt_full_page();
+        }
+    });
+    </script>
+
+    <!-- Init scripts - Banner slider -->
+    <script>
+    jQuery(document).ready(function(jQuery) {
+        jQuery('.banner-5b1a8ab98fd52 .banner').each(function(){
+            var head_slider = jQuery(this),
+                head_slider_area = head_slider.parent();
+
+            head_slider.on('initialized.owl.carousel',function(property){
+                var current = property.item.index;
+                if(jQuery(property.target).find('.owl-item').eq(current).find('video').length > 0) {
+                    jQuery(property.target).find('.owl-item').eq(current).find('video').get(0).play();
+                }
+            });
+
+            if(jQuery(this).find('.item').length > 1){
+
+                head_slider.find('.item').each(function() {
+                    var l_count = head_slider.find('.item').length,
+                        l_width = head_slider_area.find('.slider-navigation-style2 .lines').width(),
+                        l_timeout = head_slider_area.find('.slider-navigation-style2 .lines').data('timeout');
+                    head_slider_area.find('.slider-navigation-style2 .lines').append('<div class="line"><div></div></div>');
+                    head_slider_area.find('.slider-navigation-style2 .lines .line').css('width', parseInt((l_width/l_count)-8)).find('div').css('transition-duration', l_timeout+'ms');
+                });
+
+                head_slider.on('initialized.owl.carousel translated.owl.carousel', function(event) {
+                    var index = event.item.index-1,
+                        count = event.item.count;
+
+                    if(index > count) { index = 1; }
+                    if(index == 0) { index = count; }
+                    if(index < 0) { index = 0; }
+                    head_slider_area.find('.slider-navigation .count').html('<span>'+index+'</span> / <span>'+count+'</span>');
+
+                    head_slider_area.find('.slider-navigation > div > .line').addClass('go').removeClass('reset');
+
+                    if(head_slider.find('.owl-item.active .item').hasClass('white')) {
+                        head_slider_area.addClass('current-white').removeClass('current-black');
+                    }
+                    if(head_slider.find('.owl-item.active .item').hasClass('black')) {
+                        head_slider_area.addClass('current-black').removeClass('current-white');
+                    }
+
+                    head_slider_area.find('.slider-navigation .lines .line').eq(index-1).prevAll().addClass('prev').removeClass('reset go');
+                    head_slider_area.find('.slider-navigation .lines .line').eq(index-1).addClass('go').removeClass('reset prev').nextAll().addClass('reset').removeClass('go prev');
+                });
+
+                head_slider_area.on('click', '.lines .line', function() {
+                    head_slider.trigger('to.owl.carousel', [jQuery(this).index()]);
+                });
+
+                head_slider.on('translate.owl.carousel', function(event) {
+                    var index = event.item.index-1,
+                        count = event.item.count;
+
+                    if(index > count) {
+                        index = 1;
+                        head_slider_area.find('.slider-navigation .lines .line').eq(0).addClass('reset').removeClass('prev go');
+                    }
+                    if(index < 0) {
+                        index = 0;
+                        head_slider_area.find('.slider-navigation .lines .line').eq(0).addClass('reset').removeClass('prev go');
+                    }
+                    head_slider_area.find('.slider-navigation > div > .line').addClass('reset').removeClass('go');
+                });
+
+                head_slider_area.find('.slider-navigation .prev').on('click', function() {
+                    head_slider.trigger('prev.owl.carousel');
+                });
+
+                head_slider_area.find('.slider-navigation .next').on('click', function() {
+                    head_slider.trigger('next.owl.carousel');
+                });
+
+                head_slider.addClass('owl-carousel').owlCarousel({
+                    loop: true,
+                    items:1,
+                    nav: false,
+                    dots: false,
+                    autoplay: true,
+                    autoplayTimeout: 5000,
+                    autoplayHoverPause: false,
+                    smartSpeed: 300,
+                });
+
+                head_slider.on('changed.owl.carousel translated.owl.carousel dragged.owl.carousel',function(property){
+                  var current = property.item.index;
+                  head_slider.find('.owl-item.active').each(function() {
+                    control_video(jQuery(this).find('.video-wrap .video'), 'play');
+                  });
+                  head_slider.find('.owl-item:not(.active)').each(function() {
+                    control_video(jQuery(this).find('.video-wrap .video'), 'pause');
+                  });
+                });
+            } else {
+              control_video(head_slider.find('.video-wrap .video'), 'play');
+            }
+        });
+    });
+    </script>
+
+    <!-- Init scripts - Portfolio slider -->
+    <script>
+    jQuery(document).ready(function(jQuery) {
+        jQuery('.fc-area-5b1e5018c70cd').each(function() {
+            var this_area = jQuery(this),
+                slider = this_area.find('.portfolio-slider'),
+                item_slider = this_area.find('.ps-thumb-slider'),
+                flag = false;
+
+            slider.find('.num').each(function(index) {
+                jQuery(this).text(leadZero(index+1));
+            });
+
+            if(slider.find('.ps-item').length > 1){
+
+                slider.on('initialized.owl.carousel translated.owl.carousel', function() {
+                    if(flag != true) {
+                        var active_el = slider.find('.owl-item.active'),
+                            prev = this_area.find('.ps-slider-arrow.prev'),
+                            next = this_area.find('.ps-slider-arrow.next'),
+                            title_prev = active_el.prev().find('.ps-item').data('title'),
+                            title_next = active_el.next().find('.ps-item').data('title'),
+                            img_prev = active_el.prev().find('.ps-item').data('image'),
+                            img_next = active_el.next().find('.ps-item').data('image');
+
+                        prev.find('.image').css('background-image', 'url('+img_prev+')');
+                        next.find('.image').css('background-image', 'url('+img_next+')');
+
+                        prev.find('.title span').text(title_prev);
+                        next.find('.title span').text(title_next);
+
+                        setTimeout(function() {
+                            prev.removeClass('out');
+                            next.removeClass('out');
+                        }, 300);
+                    } else {
+                        flag = false;
+                    }
+                });
+
+                slider.on('translate.owl.carousel', function() {
+                    if(flag != true) {
+                        var prev = this_area.find('.ps-slider-arrow.prev'),
+                            next = this_area.find('.ps-slider-arrow.next');
+
+                        prev.addClass('out');
+                        next.addClass('out');
+                    } else {
+                        flag = false;
+                    }
+                });
+
+                slider.addClass('owl-carousel').owlCarousel({
+                    loop: true,
+                    items: 1,
+                    nav: false,
+                    dots: true,
+                    autoplay: false,
+                    navText: false,
+                    touchDrag: false,
+                    mouseDrag: false,
+                    smartSpeed: 1500,
+                    margin: 30,
+                    animateIn: 'fadeIn',
+                    animateOut: 'fadeOut'
+                });
+
+                jQuery('.ps-slider-arrow.prev').on('click', function() {
+                    slider.trigger('prev.owl.carousel');
+                });
+
+                jQuery('.ps-slider-arrow.next').on('click', function() {
+                    slider.trigger('next.owl.carousel');
+                });
+            }
+
+            if(item_slider.length > 0) {
+                item_slider.addClass('owl-carousel').owlCarousel({
+                    loop: false,
+                    items: 1,
+                    nav: false,
+                    dots: true,
+                    autoplay: false,
+                    navText: false,
+                });
+            }
+        });
+    });
+    </script>
+
+    <!-- Init scripts - Testimonials -->
+    <script>
+    jQuery(document).ready(function(jQuery) {
+        jQuery('.testimonials-5b1f7b2a9f306').each(function() {
+            var head_slider = jQuery(this);
+            if(jQuery(this).find('.testimonial-item').length > 1) {
+                head_slider.addClass('owl-carousel').owlCarousel({
+                    loop: true,
+                    items: 1,
+                    nav: false,
+                    dots: true,
+                    autoplay: true,
+                    autoplayTimeout: 3000,
+                    autoplayHoverPause: true,
+                    smartSpeed: 500,
+                    autoHeight: true,
+                    navText: false,
+                    margin: 30
+                });
+
+                head_slider.find('.nav .prev').on('click', function() {
+                    head_slider.trigger('prev.owl.carousel');
+                });
+
+                head_slider.find('.nav .next').on('click', function() {
+                    head_slider.trigger('next.owl.carousel');
+                });
+            }
+        });
+    });
+    </script>
 </body>
 </html>

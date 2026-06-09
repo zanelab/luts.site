@@ -93,17 +93,6 @@ function equalWidth(group) {
   }
 }
 
-jQuery('.mouse-cursor').each(function () {
-  var $this = jQuery(this);
-  jQuery('body').addClass('cursor-disabled');
-  jQuery(window).on('mousemove', function (event) {
-    $this.css({
-      'top': event.pageY + 'px',
-      'left': event.pageX + 'px'
-    });
-  });
-});
-
 jQuery('.mega-menu').each(function () {
   var $this = jQuery(this),
     cols_count = $this.find('.sub-menu.mega-menu-row').length;
@@ -221,11 +210,18 @@ jQuery(document).ready(function () {
     if (jQuery(this).hasClass('active')) {
       jQuery(this).removeClass('active');
       jQuery('.navigation').removeClass('active');
+      jQuery('.side-nav-button').removeClass('active');
+      jQuery('.side-navigation-block').removeClass('active');
       jQuery('body').removeClass('navigation-opened');
     } else {
       jQuery(this).addClass('active');
       jQuery('.navigation').addClass('active');
       jQuery('body').addClass('navigation-opened');
+      // Only toggle side elements on desktop (when side-header is visible)
+      if (jQuery('.side-header').css('display') !== 'none') {
+        jQuery('.side-nav-button').addClass('active');
+        jQuery('.side-navigation-block').addClass('active');
+      }
     }
   });
 
@@ -306,15 +302,18 @@ jQuery(document).ready(function () {
   jQuery('.side-nav-button').on('click', function () {
     if (jQuery(this).hasClass('active')) {
       jQuery(this).removeClass('active');
+      jQuery('.butter-button').removeClass('active');
       jQuery('.side-navigation-block').removeClass('active');
     } else {
       jQuery(this).addClass('active');
+      jQuery('.butter-button').addClass('active');
       jQuery('.side-navigation-block').addClass('active');
     }
   });
 
   jQuery('.side-navigation-block .close').on("click", function () {
     jQuery('.side-nav-button').removeClass('active');
+    jQuery('.butter-button').removeClass('active');
     jQuery('.side-navigation-block').removeClass('active');
   });
 

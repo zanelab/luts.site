@@ -1,0 +1,54 @@
+<div class="fc-item" data-title="{{ include.section.title }}">
+  <div class="cell cell-container middle">
+    <div class="container">
+      <div class="portfolio-slider-area fc-area-5b1e5018c70cd pagination-on">
+        <div class="portfolio-slider">
+          {% for item in include.section.items %}
+          <div class="ps-item" data-title="{{ item.title }}" data-image="{{ item.images[0] }}">
+            <div class="left-block">
+              <div class="categories">
+                {% for cat in item.categories %}
+                <a href="portfolio/{{ cat | downcase }}/index.html" target="_blank">{{ cat }}</a>
+                {% endfor %}
+              </div>
+              <div class="title">
+                <div class="num"></div>
+                <h2 class="h">{{ item.title }}</h2>
+              </div>
+              <div class="readmore-button">
+                <a href="{{ item.project_url }}" class="button-style1 gray"><span>view full project</span></a>
+              </div>
+            </div>
+            <div class="right">
+              <div class="ps-thumb-slider">
+                {% for img in item.images %}
+                <div class="ps-ts-item" style="background-image: url({{ img }});"></div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="ps-bottom clearfix">
+          <div class="ps-slider-arrow prev">
+            <i class="solid-arrow-collection-left-chevron-1"></i>
+            <div class="image"></div>
+            <div class="cell">
+              <div class="label">Prev</div>
+              <div class="title"><span></span></div>
+            </div>
+          </div>
+          <a href="{{ include.section.view_all_url }}" target="_self" class="ps-b-button button-style1">{{ include.section.view_all_text }}</a>
+          <div class="ps-slider-arrow next">
+            <i class="solid-arrow-collection-right-chevron-1"></i>
+            <div class="image"></div>
+            <div class="cell">
+              <div class="label">Next</div>
+              <div class="title"><span></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
