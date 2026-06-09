@@ -6,6 +6,10 @@
     <title>{% if page.title %}{{ page.title }} | {% endif %}{{ site.title }}</title>
     <meta name="description" content="{{ page.description | default: site.description }}">
 
+    <!-- jQuery (loaded first so scripts can use it) -->
+    <script src="{{ site.baseurl }}/assets/js/jquery-1.12.4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-migrate/1.4.1/jquery-migrate.min.js"></script>
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -46,12 +50,8 @@
         .site-footer .logo img { width: 96px; }
     </style>
 </head>
-<body class="{{ page.body_class }}">
+<body class="{{ page.body_class | default: 'site-dark' }}">
     {{ content }}
-
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-migrate/1.4.1/jquery-migrate.min.js"></script>
 
     <!-- Theme JS -->
     <script src="/assets/js/imagesloaded.min.js"></script>

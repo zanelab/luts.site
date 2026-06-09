@@ -1,0 +1,311 @@
+---
+layout: base
+title: LUTs
+body_class: wp-singular page-template page-template-template-landing page-template-template-landing-php page page-id-263 wp-theme-sansara woocommerce-no-js header-type-left_side header-nav-type-visible_menu header-space-no header-container-container popup_download_yes project_details_yes wrap_lines_no mobile_no site-dark chrome osx wpb-js-composer js-comp-ver-6.6.0 vc_responsive
+---
+
+<div id="all" class="site">
+  <!-- Preloader -->
+  <div class="preloader-default-area">
+    <div class="preloader-default">
+      <div class="label">LUTS</div>
+    </div>
+    <div class="line"></div>
+  </div>
+
+  <!-- Header -->
+  {% include header.html %}
+
+  <main class="main-row">
+    <div class="container">
+      <div class="vc_row wpb_row vc_row-fluid" style="  ">
+        <div class="wpb_column vc_column_container vc_col-sm-12">
+          <div class="vc_column-inner " style="  ">
+            <div class="wpb_wrapper">
+
+              <h2 class="h vc_custom_heading vc_custom_1530542247919 tal" style="text-align: left;">
+                <span>LUTs</span>
+              </h2>
+
+              <div class="blog-block">
+                <div class="blog-items row blog-type-horizontal blog-luts-list load-wrap" id="lut-list-container">
+
+                  {% for lut in site.luts limit: 4 %}
+                  <article class="blog-item col-xs-12" data-index="{{ forloop.index0 }}">
+                    <div class="wrap">
+                      <div class="img comparison-slider" data-before="{{ lut.beforeImg }}" data-after="{{ lut.afterImg }}">
+                        <div class="comparison-before" style="background-image: url('{{ lut.beforeImg }}');"></div>
+                        <div class="comparison-after" style="background-image: url('{{ lut.afterImg }}');"></div>
+                        <div class="comparison-handle">
+                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M8 5L3 10L8 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 5L17 10L12 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                        </div>
+                        <div class="comparison-label before-label">Before</div>
+                        <div class="comparison-label after-label">After</div>
+                      </div>
+                      <div class="content">
+                        <h5><a href="{{ lut.url }}">{{ lut.title }}</a></h5>
+                        <div class="blog-detail">
+                          <div class="date">
+                            <i class="ui-interface-calendar"></i>
+                            <span>{{ lut.date | date: "%d.%m.%Y" }}</span>
+                          </div>
+                          {% if lut.tags %}
+                          <div class="categories">
+                            <i class="ui-interface-tag"></i>
+                            <span>{% for tag in lut.tags %}{% if forloop.last == false %}{{ tag }}, {% else %}{{ tag }}{% endif %}{% endfor %}</span>
+                          </div>
+                          {% endif %}
+                        </div>
+                        <div class="text">
+                          {% if lut.excerpt %}
+                            {{ lut.excerpt }}
+                          {% else %}
+                            {{ lut.content | strip_html | truncate: 200 }}
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                  {% endfor %}
+
+                </div>
+
+                <!-- Load more button -->
+                {% if site.luts.size > 4 %}
+                <div class="loadmore-button-block tac">
+                  <button class="lut-load-more button-style3" id="load-more-luts" data-offset="4">
+                    <span>加载更多</span>
+                  </button>
+                </div>
+                {% endif %}
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<style>
+/* Comparison slider styles */
+.comparison-slider {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  overflow: hidden;
+}
+
+.blog-item .wrap .img {
+  height: 240px !important;
+}
+
+.comparison-before,
+.comparison-after {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+}
+
+.comparison-after {
+  clip-path: inset(0 0 0 50%);
+}
+
+.comparison-handle {
+  height: 38px;
+  width: 38px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin-left: -19px;
+  margin-top: -19px;
+  box-shadow: rgba(51, 51, 51, 0.5) 0px 0px 12px;
+  z-index: 40;
+  border-width: 2px;
+  border-style: solid;
+  border-color: rgb(255, 255, 255);
+  border-image: initial;
+  border-radius: 1000px;
+  cursor: ew-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.comparison-handle::before,
+.comparison-handle::after {
+  width: 2px;
+  height: 9999px;
+  left: 50%;
+  margin-left: 0px;
+  content: " ";
+  display: block;
+  position: absolute;
+  z-index: 30;
+  background: rgb(255, 255, 255);
+}
+
+.comparison-handle::before {
+  bottom: 50%;
+  margin-bottom: 22px;
+  box-shadow: rgb(255, 255, 255) 0px 3px 0px, rgba(51, 51, 51, 0.5) 0px 0px 12px;
+}
+
+.comparison-handle::after {
+  top: 50%;
+  margin-top: 22px;
+  box-shadow: rgb(255, 255, 255) 0px -3px 0px, rgba(51, 51, 51, 0.5) 0px 0px 12px;
+}
+
+.comparison-label {
+  position: absolute;
+  bottom: 10px;
+  padding: 4px 12px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-radius: 3px;
+  z-index: 5;
+}
+
+.before-label { left: 10px; }
+.after-label { right: 10px; }
+</style>
+
+<script>
+(function($) {
+  function initSlider($slider) {
+    if ($slider.data('slider-initialized')) return;
+    $slider.data('slider-initialized', true);
+
+    var $after = $slider.find('.comparison-after');
+    var $handle = $slider.find('.comparison-handle');
+
+    function updatePosition(x) {
+      var offset = $slider.offset();
+      var width = $slider.width();
+      var pos = x - offset.left;
+      pos = Math.max(20, Math.min(width - 20, pos));
+      var percent = (pos / width) * 100;
+      $after.css('clip-path', 'inset(0 0 0 ' + percent + '%)');
+      $handle.css('left', pos + 'px');
+    }
+
+    var isDragging = false;
+
+    $slider.on('mousedown touchstart', function(e) {
+      isDragging = true;
+      e.preventDefault();
+      var x = e.type === 'touchstart' ? e.originalEvent.touches[0].pageX : e.pageX;
+      updatePosition(x);
+    });
+
+    $(document).on('mousemove touchmove', function(e) {
+      if (!isDragging) return;
+      var x = e.type === 'touchmove' ? e.originalEvent.touches[0].pageX : e.pageX;
+      updatePosition(x);
+    });
+
+    $(document).on('mouseup touchend', function() {
+      isDragging = false;
+    });
+
+    $slider.on('click', function(e) {
+      updatePosition(e.pageX);
+    });
+  }
+
+  function initAllSliders() {
+    $('.comparison-slider').each(function() {
+      initSlider($(this));
+    });
+  }
+
+  $(document).ready(function() {
+    initAllSliders();
+
+    $('#load-more-luts').on('click', function() {
+      var $btn = $(this);
+      var offset = $btn.data('offset');
+      var total = {{ site.luts.size }};
+      var $container = $('#lut-list-container');
+      var lutsPerPage = 4;
+
+      $btn.find('span').text('加载中...');
+      $btn.prop('disabled', true);
+
+      setTimeout(function() {
+        var $newItems = $();
+
+        {% for lut in site.luts %}
+        {% if forloop.index0 >= 4 %}
+        if ({{ forloop.index0 }} < offset + lutsPerPage && {{ forloop.index0 }} < total) {
+          var html = '<article class="blog-item col-xs-12" data-index="{{ forloop.index0 }}">' +
+            '<div class="wrap">' +
+            '<div class="img comparison-slider" data-before="{{ lut.beforeImg }}" data-after="{{ lut.afterImg }}">' +
+            '<div class="comparison-before" style="background-image: url(\'{{ lut.beforeImg }}\');"></div>' +
+            '<div class="comparison-after" style="background-image: url(\'{{ lut.afterImg }}\');"></div>' +
+            '<div class="comparison-handle">' +
+            '<svg width="20" height="20" viewBox="0 0 20 20" fill="none">' +
+            '<path d="M8 5L3 10L8 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+            '<path d="M12 5L17 10L12 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+            '</svg>' +
+            '</div>' +
+            '<div class="comparison-label before-label">Before</div>' +
+            '<div class="comparison-label after-label">After</div>' +
+            '</div>' +
+            '<div class="content">' +
+            '<h5><a href="{{ lut.url }}">{{ lut.title }}</a></h5>' +
+            '<div class="blog-detail">' +
+            '<div class="date">' +
+            '<i class="ui-interface-calendar"></i>' +
+            '<span>{{ lut.date | date: "%d.%m.%Y" }}</span>' +
+            '</div>' +
+            {% if lut.tags %}
+            '<div class="categories">' +
+            '<i class="ui-interface-tag"></i>' +
+            '<span>{% for tag in lut.tags %}{% if forloop.last == false %}{{ tag }}, {% else %}{{ tag }}{% endif %}{% endfor %}</span>' +
+            '</div>' +
+            {% endif %}
+            '</div>' +
+            '<div class="text">{% if lut.excerpt %}{{ lut.excerpt }}{% else %}{{ lut.content | strip_html | truncate: 200 }}{% endif %}</div>' +
+            '</div>' +
+            '</div>' +
+            '</article>';
+          var $item = $(html);
+          $container.append($item);
+          $newItems = $newItems.add($item);
+        }
+        {% endif %}
+        {% endfor %}
+
+        if ($container.hasClass('isotope')) {
+          $container.isotope('appended', $newItems).isotope('layout');
+        }
+
+        initAllSliders();
+
+        var newOffset = offset + lutsPerPage;
+        $btn.data('offset', newOffset);
+
+        if (newOffset >= total) {
+          $btn.closest('.loadmore-button-block').hide();
+        } else {
+          $btn.find('span').text('加载更多');
+          $btn.prop('disabled', false);
+        }
+      }, 300);
+    });
+  });
+})(jQuery);
+</script>
