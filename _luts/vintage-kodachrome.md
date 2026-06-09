@@ -3,8 +3,8 @@ layout: lut
 title: Vintage Kodachrome
 date: 2024-05-12
 excerpt: "经典 Kodachrome 胶片风格 LUT，浓郁色彩和细腻颗粒带来复古温暖的视觉体验"
-beforeImg: /assets/luts/vintage-kodachrome-before.jpg
-afterImg: /assets/luts/vintage-kodachrome-after.jpg
+beforeImg: /assets/images/luts/wedding04/1554367836.jpg
+afterImg: /assets/images/luts/wedding04/1554367836after.jpg
 tags:
   - Vintage
   - Film

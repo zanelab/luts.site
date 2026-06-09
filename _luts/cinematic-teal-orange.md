@@ -3,8 +3,8 @@ layout: lut
 title: Cinematic Teal & Orange
 date: 2024-03-15
 excerpt: "经典电影风格 LUT，包含青色阴影和橙色高光，为画面带来好莱坞大片质感"
-beforeImg: /assets/luts/cinematic-teal-orange-before.jpg
-afterImg: /assets/luts/cinematic-teal-orange-after.jpg
+beforeImg: /assets/images/luts/wedding01/1554367799.jpg
+afterImg: /assets/images/luts/wedding01/1554367799after.jpg
 tags:
   - Cinematic
   - Teal

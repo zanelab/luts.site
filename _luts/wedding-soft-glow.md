@@ -3,8 +3,8 @@ layout: lut
 title: Wedding Soft Glow
 date: 2024-02-20
 excerpt: "柔和浪漫的婚礼视频 LUT，优化肤色表现，营造梦幻柔美的视觉感受"
-beforeImg: /assets/luts/wedding-soft-glow-before.jpg
-afterImg: /assets/luts/wedding-soft-glow-after.jpg
+beforeImg: /assets/images/luts/wedding05/1554367845.jpg
+afterImg: /assets/images/luts/wedding05/1554367845after.jpg
 tags:
   - Wedding
   - Soft

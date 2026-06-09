@@ -33,17 +33,14 @@ body_class: wp-singular page-template page-template-template-landing page-templa
                   {% for lut in site.luts limit: 4 %}
                   <article class="blog-item col-xs-12" data-index="{{ forloop.index0 }}">
                     <div class="wrap">
-                      <div class="img comparison-slider" data-before="{{ lut.beforeImg }}" data-after="{{ lut.afterImg }}" data-position="50">
+                      <div class="img comparison-slider" data-before="{{ lut.beforeImg }}" data-after="{{ lut.afterImg }}">
                         <div class="comparison-before" style="background-image: url('{{ lut.beforeImg }}');"></div>
                         <div class="comparison-after" style="background-image: url('{{ lut.afterImg }}');"></div>
-                        <div class="comparison-slider-handle">
-                          <div class="handle-line"></div>
-                          <div class="handle-circle">
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                              <path d="M8 5L3 10L8 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                              <path d="M12 5L17 10L12 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                          </div>
+                        <div class="comparison-handle">
+                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M8 5L3 10L8 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 5L17 10L12 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
                         </div>
                         <div class="comparison-label before-label">Before</div>
                         <div class="comparison-label after-label">After</div>
@@ -68,11 +65,6 @@ body_class: wp-singular page-template page-template-template-landing page-templa
                           {% else %}
                             {{ lut.content | strip_html | truncate: 200 }}
                           {% endif %}
-                        </div>
-                        <div class="bottom">
-                          <a href="{{ lut.url }}" class="button-style3">
-                            <span>查看详情</span>
-                          </a>
                         </div>
                       </div>
                     </div>
@@ -101,29 +93,20 @@ body_class: wp-singular page-template page-template-template-landing page-templa
 </div>
 
 <style>
-/* Override theme's .img absolute positioning for comparison slider */
-.blog-type-horizontal.blog-luts-list .blog-item .wrap .img {
-  position: relative !important;
-  height: 280px !important;
-  width: 100% !important;
-  bottom: auto !important;
-  left: auto !important;
-  top: auto !important;
-  border: none !important;
-}
-
+/* Comparison slider styles */
 .comparison-slider {
   position: relative;
   width: 100%;
-  height: 100%;
+  height: 240px;
   overflow: hidden;
-  cursor: ew-resize;
-  user-select: none;
-  -webkit-user-select: none;
 }
 
-.comparison-slider .comparison-before,
-.comparison-slider .comparison-after {
+.blog-item .wrap .img {
+  height: 240px !important;
+}
+
+.comparison-before,
+.comparison-after {
   position: absolute;
   top: 0;
   left: 0;
@@ -133,45 +116,53 @@ body_class: wp-singular page-template page-template-template-landing page-templa
   background-position: center;
 }
 
-.comparison-slider .comparison-after {
-  width: 50%;
-  height: 100%;
+.comparison-after {
+  clip-path: inset(0 0 0 50%);
 }
 
-.comparison-slider-handle {
+.comparison-handle {
+  height: 38px;
+  width: 38px;
   position: absolute;
-  top: 0;
   left: 50%;
-  width: 100%;
-  height: 100%;
-  z-index: 10;
-}
-
-.handle-line {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 2px;
-  height: 100%;
-  background: #fff;
-  transform: translateX(-50%);
-  box-shadow: 0 0 10px rgba(0,0,0,0.3);
-}
-
-.handle-circle {
-  position: absolute;
   top: 50%;
-  left: 50%;
-  width: 40px;
-  height: 40px;
-  background: rgba(0,0,0,0.7);
-  border: 2px solid #fff;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
+  margin-left: -19px;
+  margin-top: -19px;
+  box-shadow: rgba(51, 51, 51, 0.5) 0px 0px 12px;
+  z-index: 40;
+  border-width: 2px;
+  border-style: solid;
+  border-color: rgb(255, 255, 255);
+  border-image: initial;
+  border-radius: 1000px;
+  cursor: ew-resize;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+.comparison-handle::before,
+.comparison-handle::after {
+  width: 2px;
+  height: 9999px;
+  left: 50%;
+  margin-left: 0px;
+  content: " ";
+  display: block;
+  position: absolute;
+  z-index: 30;
+  background: rgb(255, 255, 255);
+}
+
+.comparison-handle::before {
+  bottom: 50%;
+  margin-bottom: 22px;
+  box-shadow: rgb(255, 255, 255) 0px 3px 0px, rgba(51, 51, 51, 0.5) 0px 0px 12px;
+}
+
+.comparison-handle::after {
+  top: 50%;
+  margin-top: 22px;
+  box-shadow: rgb(255, 255, 255) 0px -3px 0px, rgba(51, 51, 51, 0.5) 0px 0px 12px;
 }
 
 .comparison-label {
@@ -185,37 +176,29 @@ body_class: wp-singular page-template page-template-template-landing page-templa
   letter-spacing: 1px;
   border-radius: 3px;
   z-index: 5;
-  pointer-events: none;
 }
 
-.before-label {
-  left: 10px;
-}
-
-.after-label {
-  right: 10px;
-}
+.before-label { left: 10px; }
+.after-label { right: 10px; }
 </style>
 
-<!-- Comparison Slider Script -->
 <script>
 (function() {
-  function initSlider(slider) {
-    var $slider = $(slider);
+  function initSlider($slider) {
     var $after = $slider.find('.comparison-after');
-    var $handle = $slider.find('.comparison-slider-handle');
-    var position = parseInt($slider.data('position')) || 50;
-    var isDragging = false;
+    var $handle = $slider.find('.comparison-handle');
 
     function updatePosition(x) {
-      var containerOffset = $slider.offset().left;
-      var containerWidth = $slider.width();
-      var pos = ((x - containerOffset) / containerWidth) * 100;
-      pos = Math.max(5, Math.min(95, pos));
-      $after.css('width', pos + '%');
-      $handle.css('left', pos + '%');
-      $slider.data('position', pos);
+      var offset = $slider.offset();
+      var width = $slider.width();
+      var pos = x - offset.left;
+      pos = Math.max(20, Math.min(width - 20, pos));
+      var percent = (pos / width) * 100;
+      $after.css('clip-path', 'inset(0 0 0 ' + percent + '%)');
+      $handle.css('left', pos + 'px');
     }
+
+    var isDragging = false;
 
     $slider.on('mousedown touchstart', function(e) {
       isDragging = true;
@@ -241,7 +224,7 @@ body_class: wp-singular page-template page-template-template-landing page-templa
 
   $(document).ready(function() {
     $('.comparison-slider').each(function() {
-      initSlider(this);
+      initSlider($(this));
     });
   });
 })();
@@ -266,10 +249,10 @@ jQuery(document).ready(function($) {
       if ({{ forloop.index0 }} < offset + lutsPerPage && {{ forloop.index0 }} < total) {
         var html = '<article class="blog-item col-xs-12" data-index="{{ forloop.index0 }}">' +
           '<div class="wrap">' +
-          '<div class="img comparison-slider" data-before="{{ lut.beforeImg }}" data-after="{{ lut.afterImg }}" data-position="50">' +
+          '<div class="img comparison-slider" data-before="{{ lut.beforeImg }}" data-after="{{ lut.afterImg }}">' +
           '<div class="comparison-before" style="background-image: url(\'{{ lut.beforeImg }}\');"></div>' +
           '<div class="comparison-after" style="background-image: url(\'{{ lut.afterImg }}\');"></div>' +
-          '<div class="comparison-slider-handle">' +
+          '<div class="comparison-handle">' +
           '<div class="handle-line"></div>' +
           '<div class="handle-circle">' +
           '<svg width="20" height="20" viewBox="0 0 20 20" fill="none">' +
@@ -307,47 +290,8 @@ jQuery(document).ready(function($) {
       {% endif %}
       {% endfor %}
 
-      // Reinitialize new sliders
       $('.comparison-slider').each(function() {
-        var $slider = $(this);
-        if ($slider.data('initialized')) return;
-        $slider.data('initialized', true);
-
-        var $after = $slider.find('.comparison-after');
-        var $handle = $slider.find('.comparison-slider-handle');
-        var position = parseInt($slider.data('position')) || 50;
-        var isDragging = false;
-
-        function updatePosition(x) {
-          var containerOffset = $slider.offset().left;
-          var containerWidth = $slider.width();
-          var pos = ((x - containerOffset) / containerWidth) * 100;
-          pos = Math.max(5, Math.min(95, pos));
-          $after.css('width', pos + '%');
-          $handle.css('left', pos + '%');
-          $slider.data('position', pos);
-        }
-
-        $slider.on('mousedown touchstart', function(e) {
-          isDragging = true;
-          e.preventDefault();
-          var x = e.type === 'touchstart' ? e.originalEvent.touches[0].pageX : e.pageX;
-          updatePosition(x);
-        });
-
-        $(document).on('mousemove touchmove', function(e) {
-          if (!isDragging) return;
-          var x = e.type === 'touchmove' ? e.originalEvent.touches[0].pageX : e.pageX;
-          updatePosition(x);
-        });
-
-        $(document).on('mouseup touchend', function() {
-          isDragging = false;
-        });
-
-        $slider.on('click', function(e) {
-          updatePosition(e.pageX);
-        });
+        initSlider($(this));
       });
 
       var newOffset = offset + lutsPerPage;

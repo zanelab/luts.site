@@ -5934,6 +5934,7 @@ div.pagination .current,
 
 .blog-type-horizontal .blog-item .wrap .content {
   padding: 30px 30px 0;
+  height: 240px;
 }
 
 .blog-type-horizontal .blog-item .wrap .img+.content {
