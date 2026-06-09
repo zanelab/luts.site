@@ -2,6 +2,7 @@
 layout: lut
 title: Fashion Magazine
 date: 2024-04-05
+excerpt: "时尚杂志风格 LUT，明亮的高光和细腻的对比度呈现顶级时尚摄影质感"
 beforeImg: /assets/luts/fashion-magazine-before.jpg
 afterImg: /assets/luts/fashion-magazine-after.jpg
 tags:

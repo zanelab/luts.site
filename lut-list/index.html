@@ -51,7 +51,11 @@ body_class: wp-singular page-template page-template-template-landing page-templa
                           {% endif %}
                         </div>
                         <div class="text">
-                          {{ lut.content | strip_html | truncate: 100 }}
+                          {% if lut.excerpt %}
+                            {{ lut.excerpt }}
+                          {% else %}
+                            {{ lut.content | strip_html | truncate: 200 }}
+                          {% endif %}
                         </div>
                         <div class="bottom">
                           <a href="{{ lut.url }}" class="button-style3">
@@ -120,7 +124,7 @@ jQuery(document).ready(function($) {
           '</div>' +
           {% endif %}
           '</div>' +
-          '<div class="text">{{ lut.content | strip_html | truncate: 100 }}</div>' +
+          '<div class="text">{% if lut.excerpt %}{{ lut.excerpt }}{% else %}{{ lut.content | strip_html | truncate: 200 }}{% endif %}</div>' +
           '<div class="bottom">' +
           '<a href="{{ lut.url }}" class="button-style3"><span>查看详情</span></a>' +
           '</div>' +

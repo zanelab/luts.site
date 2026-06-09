@@ -2,6 +2,7 @@
 layout: lut
 title: Street Film Noir
 date: 2024-01-10
+excerpt: "高对比黑白风格 LUT，深沉的阴影和锐利的高光为城市街拍和纪录片带来艺术质感"
 beforeImg: /assets/luts/street-film-noir-before.jpg
 afterImg: /assets/luts/street-film-noir-after.jpg
 tags:
