@@ -13,3 +13,5 @@ sass:
 collections:
   pages:
     output: true
+  luts:
+    output: true
