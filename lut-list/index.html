@@ -31,10 +31,10 @@ body_class: wp-singular page-template page-template-template-landing page-templa
                 <div class="blog-items row blog-type-horizontal blog-luts-list load-wrap">
 
                   {% for lut in site.luts %}
-                  <article class="blog-item category-{{ lut.category | downcase }} col-xs-12">
+                  <article class="blog-item col-xs-12">
                     <div class="wrap">
                       <div class="img">
-                        <a href="{{ lut.url }}" style="background-image: url('{{ lut.thumbnail }}');"></a>
+                        <a href="{{ lut.url }}" style="background-image: url('{{ lut.beforeImg }}');"></a>
                       </div>
                       <div class="content">
                         <h5><a href="{{ lut.url }}">{{ lut.title }}</a></h5>
@@ -43,23 +43,12 @@ body_class: wp-singular page-template page-template-template-landing page-templa
                             <i class="ui-interface-calendar"></i>
                             <span>{{ lut.date | date: "%d.%m.%Y" }}</span>
                           </div>
+                          {% if lut.tags %}
                           <div class="categories">
                             <i class="ui-interface-tag"></i>
-                            <span>{{ lut.category }}</span>
+                            <span>{% for tag in lut.tags %}{% if forloop.last == false %}{{ tag }}, {% else %}{{ tag }}{% endif %}{% endfor %}</span>
                           </div>
-                        </div>
-                        <div class="text">{{ lut.description }}</div>
-                        <div class="bottom">
-                          <div class="like">
-                            <a href="#" class="zilla-likes" data-post-id="{{ forloop.index }}" data-postfix=" likes">
-                              <i class="ui-interface-heart"></i>
-                              <span>{{ lut.likes }} <span> likes</span></span>
-                            </a>
-                          </div>
-                          <div class="comment-count">
-                            <i class="ui-interface-chat"></i>
-                            <span>0 Comments</span>
-                          </div>
+                          {% endif %}
                         </div>
                       </div>
                     </div>
@@ -67,15 +56,6 @@ body_class: wp-singular page-template page-template-template-landing page-templa
                   {% endfor %}
 
                 </div>
-
-                <!-- Load more button (static version) -->
-                {% if site.luts.size > 4 %}
-                <div class="loadmore-button-block tac">
-                  <a class="loadmore-button button-style3" href="#">
-                    <span>Load more</span>
-                  </a>
-                </div>
-                {% endif %}
 
               </div>
 

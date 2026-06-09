@@ -46,7 +46,7 @@
         .site-footer .logo img { width: 96px; }
     </style>
 </head>
-<body class="{{ page.body_class }}">
+<body class="{{ page.body_class | default: 'site-dark' }}">
     {{ content }}
 
     <!-- jQuery -->

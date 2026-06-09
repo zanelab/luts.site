@@ -2,16 +2,12 @@
 layout: lut
 title: Vintage Kodachrome
 date: 2024-05-12
-category: Vintage
-thumbnail: /assets/luts/thumb-vintage-kodachrome.jpg
-image: /assets/luts/vintage-kodachrome-main.jpg
-description: Authentic recreation of classic Kodachrome film stocks. Rich colors, fine grain, and that unmistakable vintage warmth.
-download: /assets/luts/vintage-kodachrome.cube
-gallery:
-  - /assets/luts/vintage-kodachrome-01.jpg
-  - /assets/luts/vintage-kodachrome-02.jpg
-  - /assets/luts/vintage-kodachrome-03.jpg
-likes: 178
+beforeImg: /assets/luts/vintage-kodachrome-before.jpg
+afterImg: /assets/luts/vintage-kodachrome-after.jpg
+tags:
+  - Vintage
+  - Film
+  - Warm
 ---
 
 Authentic recreation of classic Kodachrome film stocks. Rich colors, fine grain, and that unmistakable vintage warmth. Brings a nostalgic, timeless quality to any footage.

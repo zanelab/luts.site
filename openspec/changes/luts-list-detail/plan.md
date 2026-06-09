@@ -1,5 +1,8 @@
 # Implementation Plan: LUTs 列表页和详情页
 
+## PR
+https://github.com/zanelab/luts.site/pull/2
+
 ## 前置检查
 - [x] 确认 `_luts/` 目录不存在（避免与现有文件冲突）
 

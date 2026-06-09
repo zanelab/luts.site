@@ -24,15 +24,20 @@ body_class: wp-singular page-template page-template-template-landing page-templa
         <!-- Main Content -->
         <div class="col-xs-12 col-md-8">
 
-          <div id="post-{{ forloop.index }}" class="post-{{ forloop.index }} post type-post status-publish format-standard has-post-thumbnail hentry category-{{ page.category | downcase }}">
+          <div class="post-{{ forloop.index }} post type-post status-publish format-standard has-post-thumbnail hentry">
             <div class="site-content">
 
-              <!-- Main Image -->
-              {% if page.image %}
-              <div class="post-img">
-                <img src="{{ page.image }}" alt="{{ page.title }}" loading="lazy" />
+              <!-- Before/After Comparison -->
+              <div class="lut-comparison" style="display: flex; gap: 20px; margin-bottom: 30px;">
+                <div class="lut-image" style="flex: 1;">
+                  <div style="font-size: 12px; color: #878787; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Before</div>
+                  <img src="{{ page.beforeImg }}" alt="Before {{ page.title }}" loading="lazy" style="width: 100%; height: auto;" />
+                </div>
+                <div class="lut-image" style="flex: 1;">
+                  <div style="font-size: 12px; color: #878787; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">After</div>
+                  <img src="{{ page.afterImg }}" alt="After {{ page.title }}" loading="lazy" style="width: 100%; height: auto;" />
+                </div>
               </div>
-              {% endif %}
 
               <!-- Blog Detail -->
               <div class="blog-detail">
@@ -40,68 +45,19 @@ body_class: wp-singular page-template page-template-template-landing page-templa
                   <i class="ui-interface-calendar"></i>
                   <span>{{ page.date | date: "%d.%m.%Y" }}</span>
                 </div>
+                {% if page.tags %}
                 <div class="categories">
                   <i class="ui-interface-tag"></i>
-                  <span>{{ page.category }}</span>
+                  <span>{% for tag in page.tags %}{% if forloop.last == false %}{{ tag }}, {% else %}{{ tag }}{% endif %}{% endfor %}</span>
                 </div>
+                {% endif %}
               </div>
 
               <!-- Post Content -->
               <div class="post-content">
                 <div class="clearfix">
-                  <div class="vc_row wpb_row vc_row-fluid">
-                    <div class="wpb_column vc_column_container vc_col-sm-12">
-                      <div class="vc_column-inner">
-                        <div class="wpb_wrapper">
-                          <div class="wpb_text_column wpb_content_element">
-                            <div class="wpb_wrapper">
-                              <p><span style="color: #878787;">{{ page.description }}</span></p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Gallery (if available) -->
-                  {% if page.gallery and page.gallery.size > 0 %}
-                  <div class="portfolio-block">
-                    <div class="portfolio-items row portfolio-type-grid gap-on cols-3 hover-style2 popup-gallery">
-                      {% for image in page.gallery %}
-                      <article class="portfolio-item popup-item image-center col-xs-12 col-sm-4 col-md-4">
-                        <div class="wrap">
-                          <div class="a-img">
-                            <div style="background-image: url('{{ image }}');"></div>
-                          </div>
-                          <h6><span class="cell"><span>{{ page.title }} - {{ forloop.index }}</span></span></h6>
-                        </div>
-                        <a href="{{ image }}" class="link" data-size="1175x1175" data-id="{{ forloop.index0 }}"><span></span></a>
-                      </article>
-                      {% endfor %}
-                    </div>
-                  </div>
-                  {% endif %}
-
-                  <!-- Video (if available) -->
-                  {% if page.video %}
-                  <div class="portfolio-block">
-                    <div class="portfolio-items row portfolio-type-grid gap-on cols-1 hover-style2 popup-gallery">
-                      <article class="portfolio-item popup-item image-center with-video col-xs-12 col-sm-4 col-md-4">
-                        <div class="wrap">
-                          <div class="v-i ui-interface-play-button"></div>
-                          <div class="a-img">
-                            <div style="background-image: url('{{ page.thumbnail }}');"></div>
-                          </div>
-                          <h6><span class="cell"><span>{{ page.title }} - Video</span></span></h6>
-                        </div>
-                        <a href="#" class="link" data-type="video" data-size="1920x1080" data-video='<div class="wrapper"><div class="video-wrapper"><iframe loading="lazy" class="pswp__video" width="1920" height="1080" src="{{ page.video }}?rel=0&showinfo=0" frameborder="0" allowfullscreen></iframe></div></div>' data-id="0"><span></span></a>
-                      </article>
-                    </div>
-                  </div>
-                  {% endif %}
-
                   <!-- Additional Content from Markdown -->
-                  <div class="vc_row wpb_row vc_row-fluid" style="margin-top: 30px;">
+                  <div class="vc_row wpb_row vc_row-fluid">
                     <div class="wpb_column vc_column_container vc_col-sm-12">
                       <div class="vc_column-inner">
                         <div class="wpb_wrapper">
@@ -114,19 +70,8 @@ body_class: wp-singular page-template page-template-template-landing page-templa
                       </div>
                     </div>
                   </div>
-
                 </div>
               </div>
-
-              <!-- Download Button -->
-              {% if page.download %}
-              <div class="lut-download" style="margin: 40px 0; text-align: center;">
-                <a href="{{ page.download }}" class="button-style2" download>
-                  <i class="ui-interface-download"></i>
-                  <span>Download LUT</span>
-                </a>
-              </div>
-              {% endif %}
 
             </div>
 
@@ -135,7 +80,7 @@ body_class: wp-singular page-template page-template-template-landing page-templa
               <div class="pb-like">
                 <a href="#" class="zilla-likes" data-post-id="{{ forloop.index }}" data-postfix=" likes">
                   <i class="ui-interface-heart"></i>
-                  <span>{{ page.likes }} <span> likes</span></span>
+                  <span>0 <span> likes</span></span>
                 </a>
               </div>
               <div class="pb-comments">
@@ -174,10 +119,6 @@ body_class: wp-singular page-template page-template-template-landing page-templa
 
           </div>
 
-          <!-- Comments Area (disabled for LUTs) -->
-          <div id="comments" class="comments-area" style="display: none;">
-          </div>
-
         </div>
 
         <!-- Sidebar -->
@@ -186,48 +127,36 @@ body_class: wp-singular page-template page-template-template-landing page-templa
 
             <!-- Search -->
             <div id="search-3" class="widget widget_search">
-              <form role="search" method="get" class="searchform" action="/luts/">
+              <form role="search" method="get" class="searchform" action="/lut-list/">
                 <button type="submit" class="searchsubmit" value=""><i class="base-icons-magnifying-glass"></i></button>
                 <div><input type="text" value="" placeholder="Type and hit enter" name="s" class="input" /></div>
               </form>
             </div>
 
-            <!-- Categories -->
-            <div id="categories-3" class="widget widget_categories">
-              <h6 class="widget-title">Categories</h6>
-              <ul>
-                {% assign categories = site.luts | map: 'category' | uniq %}
-                {% for cat in categories %}
-                <li class="cat-item">
-                  <a href="/luts/?category={{ cat | downcase }}">{{ cat }}</a>
-                </li>
+            <!-- Tags -->
+            {% if page.tags %}
+            <div id="tag_cloud-2" class="widget widget_tag_cloud">
+              <h6 class="widget-title">Tags</h6>
+              <div class="tagcloud">
+                {% for tag in page.tags %}
+                <span class="tag-cloud-link">{{ tag }}</span>
                 {% endfor %}
-              </ul>
+              </div>
             </div>
+            {% endif %}
 
-            <!-- Recent Posts -->
+            <!-- Recent LUTs -->
             <div id="blog_post-2" class="widget widget_blog_post">
               <h6 class="widget-title">Recent LUTs</h6>
               <div class="blog-post-widget widget">
                 {% for lut in site.luts limit: 4 %}
                 <div class="item">
-                  <a href="{{ lut.url }}" class="image" style="background-image: url('{{ lut.thumbnail }}')"></a>
+                  <a href="{{ lut.url }}" class="image" style="background-image: url('{{ lut.beforeImg }}')"></a>
                   <div class="text">
                     <a href="{{ lut.url }}" class="name">{{ lut.title }}</a>
                     <div class="blog-detail"><span>{{ lut.date | date: "%d.%m.%Y" }}</span></div>
                   </div>
                 </div>
-                {% endfor %}
-              </div>
-            </div>
-
-            <!-- Tags -->
-            <div id="tag_cloud-2" class="widget widget_tag_cloud">
-              <h6 class="widget-title">Tags</h6>
-              <div class="tagcloud">
-                {% assign tags = site.luts | map: 'category' | uniq %}
-                {% for tag in tags %}
-                <a href="/luts/?category={{ tag | downcase }}" class="tag-cloud-link">{{ tag }}</a>
                 {% endfor %}
               </div>
             </div>
