@@ -33,18 +33,16 @@ body_class: wp-singular page-template page-template-template-landing page-templa
                   {% for lut in site.luts limit: 4 %}
                   <article class="blog-item col-xs-12" data-index="{{ forloop.index0 }}">
                     <div class="wrap">
-                      <div class="img comparison-slider" data-before="{{ lut.beforeImg }}" data-after="{{ lut.afterImg }}">
-                        <div class="comparison-container">
-                          <div class="comparison-before" style="background-image: url('{{ lut.beforeImg }}');"></div>
-                          <div class="comparison-after" style="background-image: url('{{ lut.afterImg }}');"></div>
-                          <div class="comparison-slider-handle">
-                            <div class="handle-line"></div>
-                            <div class="handle-circle">
-                              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                <path d="M8 5L3 10L8 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M12 5L17 10L12 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                              </svg>
-                            </div>
+                      <div class="img comparison-slider" data-before="{{ lut.beforeImg }}" data-after="{{ lut.afterImg }}" data-position="50">
+                        <div class="comparison-before" style="background-image: url('{{ lut.beforeImg }}');"></div>
+                        <div class="comparison-after" style="background-image: url('{{ lut.afterImg }}');"></div>
+                        <div class="comparison-slider-handle">
+                          <div class="handle-line"></div>
+                          <div class="handle-circle">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                              <path d="M8 5L3 10L8 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                              <path d="M12 5L17 10L12 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
                           </div>
                         </div>
                         <div class="comparison-label before-label">Before</div>
@@ -106,19 +104,15 @@ body_class: wp-singular page-template page-template-template-landing page-templa
 .comparison-slider {
   position: relative;
   width: 100%;
-  height: 280px;
+  height: 260px;
   overflow: hidden;
   cursor: ew-resize;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.comparison-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.comparison-before,
-.comparison-after {
+.comparison-slider .comparison-before,
+.comparison-slider .comparison-after {
   position: absolute;
   top: 0;
   left: 0;
@@ -128,18 +122,18 @@ body_class: wp-singular page-template page-template-template-landing page-templa
   background-position: center;
 }
 
-.comparison-after {
-  clip-path: inset(0 50% 0 0);
+.comparison-slider .comparison-after {
+  width: 50%;
+  height: 100%;
+  transition: width 0.05s ease-out;
 }
 
 .comparison-slider-handle {
   position: absolute;
   top: 0;
   left: 50%;
-  width: 40px;
+  width: 100%;
   height: 100%;
-  transform: translateX(-50%);
-  cursor: ew-resize;
   z-index: 10;
 }
 
@@ -181,6 +175,7 @@ body_class: wp-singular page-template page-template-template-landing page-templa
   letter-spacing: 1px;
   border-radius: 3px;
   z-index: 5;
+  pointer-events: none;
 }
 
 .before-label {
@@ -194,44 +189,56 @@ body_class: wp-singular page-template page-template-template-landing page-templa
 
 <!-- Comparison Slider Script -->
 <script>
-jQuery(document).ready(function($) {
-  $('.comparison-slider').each(function() {
-    var $slider = $(this);
+(function() {
+  var isDragging = false;
+  var currentSlider = null;
+
+  function initSlider(slider) {
+    var $slider = $(slider);
     var $after = $slider.find('.comparison-after');
     var $handle = $slider.find('.comparison-slider-handle');
-    var isDragging = false;
+    var position = parseInt($slider.data('position')) || 50;
 
-    function updateSlider(x) {
+    function updatePosition(x) {
       var containerOffset = $slider.offset().left;
       var containerWidth = $slider.width();
-      var position = ((x - containerOffset) / containerWidth) * 100;
-      position = Math.max(0, Math.min(100, position));
-
-      $after.css('clip-path', 'inset(0 ' + (100 - position) + '% 0 0)');
-      $handle.css('left', position + '%');
+      var pos = ((x - containerOffset) / containerWidth) * 100;
+      pos = Math.max(5, Math.min(95, pos));
+      $after.css('width', pos + '%');
+      $handle.css('left', pos + '%');
+      $slider.data('position', pos);
     }
 
     $slider.on('mousedown touchstart', function(e) {
       isDragging = true;
+      currentSlider = $slider;
       e.preventDefault();
+      var x = e.type === 'touchstart' ? e.originalEvent.touches[0].pageX : e.pageX;
+      updatePosition(x);
     });
 
     $(document).on('mousemove touchmove', function(e) {
-      if (!isDragging) return;
+      if (!isDragging || !currentSlider) return;
       var x = e.type === 'touchmove' ? e.originalEvent.touches[0].pageX : e.pageX;
-      updateSlider(x);
+      updatePosition(x);
     });
 
     $(document).on('mouseup touchend', function() {
       isDragging = false;
+      currentSlider = null;
     });
 
-    // Click to jump
     $slider.on('click', function(e) {
-      updateSlider(e.pageX);
+      updatePosition(e.pageX);
+    });
+  }
+
+  $(document).ready(function() {
+    $('.comparison-slider').each(function() {
+      initSlider(this);
     });
   });
-});
+})();
 </script>
 
 <!-- Load More Script -->
@@ -253,8 +260,7 @@ jQuery(document).ready(function($) {
       if ({{ forloop.index0 }} < offset + lutsPerPage && {{ forloop.index0 }} < total) {
         var html = '<article class="blog-item col-xs-12" data-index="{{ forloop.index0 }}">' +
           '<div class="wrap">' +
-          '<div class="img comparison-slider" data-before="{{ lut.beforeImg }}" data-after="{{ lut.afterImg }}">' +
-          '<div class="comparison-container">' +
+          '<div class="img comparison-slider" data-before="{{ lut.beforeImg }}" data-after="{{ lut.afterImg }}" data-position="50">' +
           '<div class="comparison-before" style="background-image: url(\'{{ lut.beforeImg }}\');"></div>' +
           '<div class="comparison-after" style="background-image: url(\'{{ lut.afterImg }}\');"></div>' +
           '<div class="comparison-slider-handle">' +
@@ -264,7 +270,6 @@ jQuery(document).ready(function($) {
           '<path d="M8 5L3 10L8 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
           '<path d="M12 5L17 10L12 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
           '</svg>' +
-          '</div>' +
           '</div>' +
           '</div>' +
           '<div class="comparison-label before-label">Before</div>' +
@@ -296,40 +301,46 @@ jQuery(document).ready(function($) {
       {% endif %}
       {% endfor %}
 
-      // Reinitialize sliders for new items
+      // Reinitialize new sliders
       $('.comparison-slider').each(function() {
         var $slider = $(this);
+        if ($slider.data('initialized')) return;
+        $slider.data('initialized', true);
+
         var $after = $slider.find('.comparison-after');
         var $handle = $slider.find('.comparison-slider-handle');
+        var position = parseInt($slider.data('position')) || 50;
         var isDragging = false;
 
-        function updateSlider(x) {
+        function updatePosition(x) {
           var containerOffset = $slider.offset().left;
           var containerWidth = $slider.width();
-          var position = ((x - containerOffset) / containerWidth) * 100;
-          position = Math.max(0, Math.min(100, position));
-
-          $after.css('clip-path', 'inset(0 ' + (100 - position) + '% 0 0)');
-          $handle.css('left', position + '%');
+          var pos = ((x - containerOffset) / containerWidth) * 100;
+          pos = Math.max(5, Math.min(95, pos));
+          $after.css('width', pos + '%');
+          $handle.css('left', pos + '%');
+          $slider.data('position', pos);
         }
 
-        $slider.off('mousedown touchstart').on('mousedown touchstart', function(e) {
+        $slider.on('mousedown touchstart', function(e) {
           isDragging = true;
           e.preventDefault();
+          var x = e.type === 'touchstart' ? e.originalEvent.touches[0].pageX : e.pageX;
+          updatePosition(x);
         });
 
-        $(document).off('mousemove touchmove').on('mousemove touchmove', function(e) {
+        $(document).on('mousemove touchmove', function(e) {
           if (!isDragging) return;
           var x = e.type === 'touchmove' ? e.originalEvent.touches[0].pageX : e.pageX;
-          updateSlider(x);
+          updatePosition(x);
         });
 
-        $(document).off('mouseup touchend').on('mouseup touchend', function() {
+        $(document).on('mouseup touchend', function() {
           isDragging = false;
         });
 
-        $slider.off('click').on('click', function(e) {
-          updateSlider(e.pageX);
+        $slider.on('click', function(e) {
+          updatePosition(e.pageX);
         });
       });
 
