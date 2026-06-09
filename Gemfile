@@ -1,0 +1,6 @@
+source 'https://rubygems.org'
+gem 'jekyll', '~> 4.3'
+gem 'jekyll-sass-converter', '~> 3.0'
+gem 'jekyll-seo-tag', '~> 2.7'
+gem 'jekyll-sitemap'
+gem 'sassc'
