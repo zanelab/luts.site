@@ -28,10 +28,10 @@ body_class: wp-singular page-template page-template-template-landing page-templa
               </h2>
 
               <div class="blog-block">
-                <div class="blog-items row blog-type-horizontal blog-luts-list load-wrap">
+                <div class="blog-items row blog-type-horizontal blog-luts-list load-wrap" id="lut-list-container">
 
-                  {% for lut in site.luts %}
-                  <article class="blog-item col-xs-12">
+                  {% for lut in site.luts limit: 4 %}
+                  <article class="blog-item col-xs-12" data-index="{{ forloop.index0 }}">
                     <div class="wrap">
                       <div class="img">
                         <a href="{{ lut.url }}" style="background-image: url('{{ lut.beforeImg }}');"></a>
@@ -50,12 +50,29 @@ body_class: wp-singular page-template page-template-template-landing page-templa
                           </div>
                           {% endif %}
                         </div>
+                        <div class="text">
+                          {{ lut.content | strip_html | truncate: 100 }}
+                        </div>
+                        <div class="bottom">
+                          <a href="{{ lut.url }}" class="button-style3">
+                            <span>查看详情</span>
+                          </a>
+                        </div>
                       </div>
                     </div>
                   </article>
                   {% endfor %}
 
                 </div>
+
+                <!-- Load more button -->
+                {% if site.luts.size > 4 %}
+                <div class="loadmore-button-block tac">
+                  <button class="loadmore-button button-style3" id="load-more-luts" data-offset="4">
+                    <span>Load more</span>
+                  </button>
+                </div>
+                {% endif %}
 
               </div>
 
@@ -66,3 +83,65 @@ body_class: wp-singular page-template page-template-template-landing page-templa
     </div>
   </main>
 </div>
+
+<!-- Load More Script -->
+<script>
+jQuery(document).ready(function($) {
+  $('#load-more-luts').on('click', function() {
+    var $btn = $(this);
+    var offset = $btn.data('offset');
+    var total = {{ site.luts.size }};
+    var $container = $('#lut-list-container');
+    var lutsPerPage = 4;
+
+    $btn.find('span').text('Loading...');
+    $btn.prop('disabled', true);
+
+    setTimeout(function() {
+      {% for lut in site.luts %}
+      {% if forloop.index0 >= 4 %}
+      if ({{ forloop.index0 }} < offset + lutsPerPage && {{ forloop.index0 }} < total) {
+        var html = '<article class="blog-item col-xs-12" data-index="{{ forloop.index0 }}">' +
+          '<div class="wrap">' +
+          '<div class="img">' +
+          '<a href="{{ lut.url }}" style="background-image: url(\'{{ lut.beforeImg }}\');"></a>' +
+          '</div>' +
+          '<div class="content">' +
+          '<h5><a href="{{ lut.url }}">{{ lut.title }}</a></h5>' +
+          '<div class="blog-detail">' +
+          '<div class="date">' +
+          '<i class="ui-interface-calendar"></i>' +
+          '<span>{{ lut.date | date: "%d.%m.%Y" }}</span>' +
+          '</div>' +
+          {% if lut.tags %}
+          '<div class="categories">' +
+          '<i class="ui-interface-tag"></i>' +
+          '<span>{% for tag in lut.tags %}{% if forloop.last == false %}{{ tag }}, {% else %}{{ tag }}{% endif %}{% endfor %}</span>' +
+          '</div>' +
+          {% endif %}
+          '</div>' +
+          '<div class="text">{{ lut.content | strip_html | truncate: 100 }}</div>' +
+          '<div class="bottom">' +
+          '<a href="{{ lut.url }}" class="button-style3"><span>查看详情</span></a>' +
+          '</div>' +
+          '</div>' +
+          '</div>' +
+          '</article>';
+        $container.append(html);
+      }
+      {% endif %}
+      {% endfor %}
+
+      var newOffset = offset + lutsPerPage;
+      $btn.data('offset', newOffset);
+
+      if (newOffset >= total) {
+        $btn.closest('.loadmore-button-block').hide();
+      } else {
+        $btn.find('span').text('Load more');
+        $btn.prop('disabled', false);
+      }
+    }, 300);
+  });
+});
+</script>
