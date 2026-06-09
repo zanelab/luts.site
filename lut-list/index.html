@@ -1,0 +1,88 @@
+---
+layout: base
+title: LUTs
+body_class: wp-singular page-template page-template-template-landing page-template-template-landing-php page page-id-263 wp-theme-sansara woocommerce-no-js header-type-left_side header-nav-type-visible_menu header-space-no header-container-container popup_download_yes project_details_yes wrap_lines_no mobile_no site-dark chrome osx wpb-js-composer js-comp-ver-6.6.0 vc_responsive
+---
+
+<div id="all" class="site">
+  <!-- Preloader -->
+  <div class="preloader-default-area">
+    <div class="preloader-default">
+      <div class="label">LUTS</div>
+    </div>
+    <div class="line"></div>
+  </div>
+
+  <!-- Header -->
+  {% include header.html %}
+
+  <main class="main-row">
+    <div class="container">
+      <div class="vc_row wpb_row vc_row-fluid" style="  ">
+        <div class="wpb_column vc_column_container vc_col-sm-12">
+          <div class="vc_column-inner " style="  ">
+            <div class="wpb_wrapper">
+
+              <h2 class="h vc_custom_heading vc_custom_1530542247919 tal" style="text-align: left;">
+                <span>LUTs</span>
+              </h2>
+
+              <div class="blog-block">
+                <div class="blog-items row blog-type-horizontal blog-luts-list load-wrap">
+
+                  {% for lut in site.luts %}
+                  <article class="blog-item category-{{ lut.category | downcase }} col-xs-12">
+                    <div class="wrap">
+                      <div class="img">
+                        <a href="{{ lut.url }}" style="background-image: url('{{ lut.thumbnail }}');"></a>
+                      </div>
+                      <div class="content">
+                        <h5><a href="{{ lut.url }}">{{ lut.title }}</a></h5>
+                        <div class="blog-detail">
+                          <div class="date">
+                            <i class="ui-interface-calendar"></i>
+                            <span>{{ lut.date | date: "%d.%m.%Y" }}</span>
+                          </div>
+                          <div class="categories">
+                            <i class="ui-interface-tag"></i>
+                            <span>{{ lut.category }}</span>
+                          </div>
+                        </div>
+                        <div class="text">{{ lut.description }}</div>
+                        <div class="bottom">
+                          <div class="like">
+                            <a href="#" class="zilla-likes" data-post-id="{{ forloop.index }}" data-postfix=" likes">
+                              <i class="ui-interface-heart"></i>
+                              <span>{{ lut.likes }} <span> likes</span></span>
+                            </a>
+                          </div>
+                          <div class="comment-count">
+                            <i class="ui-interface-chat"></i>
+                            <span>0 Comments</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                  {% endfor %}
+
+                </div>
+
+                <!-- Load more button (static version) -->
+                {% if site.luts.size > 4 %}
+                <div class="loadmore-button-block tac">
+                  <a class="loadmore-button button-style3" href="#">
+                    <span>Load more</span>
+                  </a>
+                </div>
+                {% endif %}
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
