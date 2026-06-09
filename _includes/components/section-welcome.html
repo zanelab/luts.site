@@ -1,0 +1,26 @@
+<div class="fc-item" data-title="{{ include.section.title }}">
+  <div class="cell cell-container middle">
+    <div class="container-fluid no-padding">
+      <div class="banner-area banner-5b1a8ab98fd52 autoplay-true">
+        <div class="banner navigation-style2">
+          {% for slide in include.section.slides %}
+          <div class="item banner-item-6a22e69c166e4 bottom {{ slide.text_color | default: 'white' }}"
+               style="background-image: url({{ slide.image }});">
+            <div class="overlay"></div>
+            <div class="container">
+              <div class="cell">
+                <div class="h">{{ slide.title }}<br />{{ slide.subtitle }}</div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="slider-navigation slider-navigation-style2">
+          <div class="container">
+            <div class="lines" data-timeout="5000"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

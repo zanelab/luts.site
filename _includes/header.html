@@ -1,0 +1,103 @@
+<header class="site-header with-side header_left_side dark main-row">
+    <div class="container">
+        <div class="logo">
+            <a href="{{ site.baseurl }}/">
+                <img class="light l-b" src="/assets/images/logo-light.png" alt="{{ site.title }}">
+                <img class="dark l-b" src="/assets/images/logo-dark.png" alt="{{ site.title }}">
+            </a>
+        </div>
+        <div class="fr">
+            <nav class="navigation hidden-menu">
+                <ul id="menu-navigation" class="menu">
+                    {% for item in site.data.navigation %}
+                    {% if item.children %}
+                    <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children">
+                        <a href="{{ site.baseurl }}{{ item.url }}"><span>{{ item.title }}</span></a>
+                        <ul class="sub-menu">
+                            {% for child in item.children %}
+                            <li class="menu-item">
+                                <a href="{{ site.baseurl }}{{ child.url }}"><span>{{ child.title }}</span></a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="menu-item">
+                        <a href="{{ site.baseurl }}{{ item.url }}"><span>{{ item.title }}</span></a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+            </nav>
+            <div class="butter-button hidden_menu">
+                <div></div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Side Header -->
+<div class="side-header main-row header_left_side dark">
+  <div class="logo">
+    <a href="{{ site.baseurl }}/">
+      <img class="light l-b" src="/assets/images/logo-light.png" alt="{{ site.title }}">
+      <img class="dark l-b" src="/assets/images/logo-dark.png" alt="{{ site.title }}">
+    </a>
+  </div>
+  <div class="side-nav-button"><div></div></div>
+  <div class="bottom">
+    <div class="social-buttons">
+      <a href="{{ site.baseurl }}/" target="_self"><i class="fa fa-facebook"></i> <span>Facebook</span></a>
+      <a href="{{ site.baseurl }}/" target="_self"><i class="fa fa-twitter"></i> <span>Twitter</span></a>
+      <a href="{{ site.baseurl }}/" target="_self"><i class="fa fa-instagram"></i> <span>Instagram</span></a>
+    </div>
+  </div>
+  <span class="dec-line"></span>
+</div>
+
+<!-- Side Navigation Block -->
+<div class="side-navigation-block">
+  <div class="close ui-interface-delete"></div>
+  <div class="wrap">
+    <div class="cell">
+      <nav class="side-navigation">
+        <ul id="menu-side-navigation" class="menu">
+          {% for item in site.data.navigation %}
+          {% if item.children %}
+          <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children">
+            <a href="{{ site.baseurl }}{{ item.url }}"><span>{{ item.title }}</span></a>
+            <ul class="sub-menu">
+              {% for child in item.children %}
+              <li class="menu-item">
+                <a href="{{ site.baseurl }}{{ child.url }}"><span>{{ child.title }}</span></a>
+              </li>
+              {% endfor %}
+            </ul>
+          </li>
+          {% else %}
+          <li class="menu-item">
+            <a href="{{ site.baseurl }}{{ item.url }}"><span>{{ item.title }}</span></a>
+          </li>
+          {% endif %}
+          {% endfor %}
+        </ul>
+      </nav>
+    </div>
+  </div>
+  <div class="bottom">
+    <div class="copyright">(c) Luts.site, 2026, By Zane. </div>
+  </div>
+</div>
+
+<div class="header-space hide"></div>
+
+<!-- Search Popup -->
+<div class="search-popup main-row">
+  <div class="close ui-interface-delete"></div>
+  <div class="centered-container">
+    <form role="search" method="get" class="searchform" action="{{ site.baseurl }}/">
+      <button type="submit" class="searchsubmit" value=""><i class="base-icons-magnifying-glass"></i></button>
+      <div><input type="text" value="" placeholder="Type and hit enter" name="s" class="input" /></div>
+    </form>
+  </div>
+</div>

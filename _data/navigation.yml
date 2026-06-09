@@ -1,0 +1,11 @@
+- title: 首页
+  url: /
+  target: _self
+
+- title: 颜色映射表
+  url: /luts.html
+  target: _self
+
+- title: 使用教程
+  url: /tutorials.html
+  target: _self

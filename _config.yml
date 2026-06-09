@@ -1,0 +1,15 @@
+title: Sansara
+description: A Jekyll site built from the Sansara WordPress theme
+theme: null
+plugins:
+  - jekyll-sass-converter
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+sass:
+  style: compressed
+  sass_dir: _sass
+
+collections:
+  pages:
+    output: true

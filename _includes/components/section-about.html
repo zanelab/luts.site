@@ -1,0 +1,116 @@
+<div class="fc-item" data-title="{{ include.section.title }}" style="background-image: url({{ include.section.background_image }});">
+  <div class="cell cell-container middle">
+    <div class="container">
+      <div class="vc_row wpb_row vc_inner vc_row-fluid" style="">
+
+        <!-- Name and bio -->
+        <div class="wpb_column vc_column_container vc_col-sm-12 vc_col-lg-7">
+          <div class="vc_column-inner">
+            <div class="wpb_wrapper">
+              <div class="wpb_text_column wpb_content_element vc_custom_1528793578152">
+                <div class="wpb_wrapper">
+                  <p><span style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #ebb85e;">{{ include.section.greeting }}</span></p>
+                </div>
+              </div>
+              <h2 style="text-align: left" class="h vc_custom_heading vc_custom_1528793611384 tal">
+                <span>{{ include.section.name }}</span>
+              </h2>
+              <div class="wpb_text_column wpb_content_element">
+                <div class="wpb_wrapper">
+                  <p><span style="font-size: 14px; color: #878787; line-height: 24px;">{{ include.section.bio }}</span></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty column -->
+        <div class="wpb_column vc_column_container vc_col-sm-12">
+          <div class="vc_column-inner">
+            <div class="wpb_wrapper"></div>
+          </div>
+        </div>
+
+        <!-- Stat 1 -->
+        <div class="wpb_column vc_column_container vc_col-sm-12 vc_col-lg-3 vc_col-md-5">
+          <div class="vc_column-inner">
+            <div class="wpb_wrapper">
+              <div class="icon-box-in-row icon-box-in-row-6a22e69c1cc8f">
+                <div class="icon {{ include.section.stats[0].icon }}"></div>
+                <div class="count">{{ include.section.stats[0].count }}</div>
+                <div class="heading">
+                  <div class="cell">{{ include.section.stats[0].label }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stat 2 with offset -->
+        <div class="wpb_column vc_column_container vc_col-sm-12 vc_col-lg-offset-1 vc_col-lg-3 vc_col-md-5">
+          <div class="vc_column-inner">
+            <div class="wpb_wrapper">
+              <div class="icon-box-in-row icon-box-in-row-6a22e69c1cd86">
+                <div class="icon {{ include.section.stats[1].icon }}"></div>
+                <div class="count">{{ include.section.stats[1].count }}</div>
+                <div class="heading">
+                  <div class="cell">{{ include.section.stats[1].label }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Spacer row -->
+        <div class="wpb_column vc_column_container vc_col-sm-12">
+          <div class="vc_column-inner vc_custom_1528802343854">
+            <div class="wpb_wrapper"></div>
+          </div>
+        </div>
+
+        <!-- Stat 3 -->
+        <div class="wpb_column vc_column_container vc_col-sm-12 vc_col-lg-3 vc_col-md-5">
+          <div class="vc_column-inner">
+            <div class="wpb_wrapper">
+              <div class="icon-box-in-row icon-box-in-row-6a22e69c1cf14">
+                <div class="icon {{ include.section.stats[2].icon }}"></div>
+                <div class="count">{{ include.section.stats[2].count }}</div>
+                <div class="heading">
+                  <div class="cell">{{ include.section.stats[2].label }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stat 4 with offset -->
+        <div class="wpb_column vc_column_container vc_col-sm-12 vc_col-lg-offset-1 vc_col-lg-3 vc_col-md-5">
+          <div class="vc_column-inner">
+            <div class="wpb_wrapper">
+              <div class="icon-box-in-row icon-box-in-row-6a22e69c1cfed">
+                <div class="icon {{ include.section.stats[3].icon }}"></div>
+                <div class="count">{{ include.section.stats[3].count }}</div>
+                <div class="heading">
+                  <div class="cell">{{ include.section.stats[3].label }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Signature -->
+        <div class="wpb_column vc_column_container vc_col-sm-12">
+          <div class="vc_column-inner vc_custom_1528805558428">
+            <div class="wpb_wrapper">
+              <div class="subscribe-block">
+                <div class="heading">best<br/>regards</div>
+                <img decoding="async" width="125" height="87" src="{{ include.section.signature_image }}" class="attachment-full size-full" alt="" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
