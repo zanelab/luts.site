@@ -105,3 +105,22 @@
 - [x] `rm -rf supabase/functions/_shared/`
 - [x] `supabase/README.md` 顶部目录树更新
 - [x] `design.md` 第 10 节文件结构同步
+
+---
+
+## Amend: GitHub Actions 跟上 Makefile（2026-06-10）
+
+**触发**：发现现有 `.github/workflows/jekyll-gh-pages.yml` 用的是 `actions/jekyll-build-pages@v1`，它只跑标准 jekyll build，不会调用 Makefile / `script/build-config.sh`，导致生产 `_site/` 缺 `assets/js/supabase-config.js`，前端下载流程完全不可用。
+**决策**：换成 `ruby/setup-ruby` + `make build`；`script/build-config.sh` 改为「环境变量 > .env 文件 > 'TODO'」优先级，CI 通过 GitHub Secrets 注入四个变量，本地继续用 `.env`。
+
+### 改动
+- [x] `script/build-config.sh`：`get_value` 内先 `printenv "$var_name"`，命中即返回；否则 fallback 到 `.env`；都没有再写 'TODO'
+- [x] `.github/workflows/jekyll-gh-pages.yml`：build 步骤改为 `ruby/setup-ruby@v1`（`bundler-cache: true`）+ `make build`，`env:` 块映射 `SUPABASE_URL` / `SUPABASE_ANON_KEY` / `SUPABASE_EDGE_FUNCTION` / `TURNSTILE_SITE_KEY` 四个 secrets；`JEKYLL_ENV=production`
+- [x] `upload-pages-artifact` 显式 `path: ./_site`
+- [x] `README.md`：加一节「GitHub Secrets 配置」，列出四个 secrets 名 + 在哪里加
+
+### 验证
+- [x] 本地：`SUPABASE_URL=foo SUPABASE_ANON_KEY=bar SUPABASE_EDGE_FUNCTION=baz TURNSTILE_SITE_KEY=0xtest sh script/build-config.sh`，生成的 supabase-config.js 含上述值（不是 'TODO'）
+- [x] 本地：`make build` 链路通（`script/build-config.sh` 退出 0 → `jekyll build done in 1.749s` → `_site/assets/js/supabase-config.js` 与 `_site/luts/*.html` 均生成）
+- [ ] CI：merge 后 Actions run 通过，部署后访问详情页查看 `assets/js/supabase-config.js` 含真实值
+- [ ] 浏览器：详情页 console 无 `LUTSITE_*` undefined 报错

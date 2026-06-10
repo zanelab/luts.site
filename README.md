@@ -177,10 +177,29 @@ Content-Type: application/json
 
 ## 部署到 GitHub Pages
 
-仓库已配置 GitHub Actions（`.github/workflows/`）自动构建并发布。注意：
+仓库已配置 GitHub Actions（`.github/workflows/jekyll-gh-pages.yml`）：每次 push 到 `main` 时自动 `bundle install` → `make build`（先跑 `script/build-config.sh` 生成 `supabase-config.js`，再 `bundle exec jekyll build`）→ 部署到 GitHub Pages。
 
-1. **`.env` 不会被提交**，GitHub Pages 构建时不会读取本地 `.env`，需要在 repo 的 `Settings → Secrets and variables → Actions` 中配置同名 secret，并在 workflow 中导出为环境变量后再跑 `make build`。
-2. CDN 上的 `@supabase/supabase-js` 与 Turnstile 是在浏览器侧加载，不影响构建。
+### 必需的 GitHub Secrets
+
+在 repo `Settings → Secrets and variables → Actions → Repository secrets` 添加以下四个 secrets（**和 `.env` 同名**，workflow 已配置好映射）：
+
+| Secret 名 | 对应 `.env` 字段 | 备注 |
+|-----------|-----------------|------|
+| `SUPABASE_URL` | `SUPABASE_URL` | 必填 |
+| `SUPABASE_ANON_KEY` | `SUPABASE_ANON_KEY` | 必填，**仍是 anon key**，不要填 service_role |
+| `SUPABASE_EDGE_FUNCTION` | `SUPABASE_EDGE_FUNCTION` | 必填，通常是 `request-lut-download` |
+| `TURNSTILE_SITE_KEY` | `TURNSTILE_SITE_KEY` | 必填，`0x` 开头 |
+
+workflow 中通过 `env:` 注入到 `make build`，由 `script/build-config.sh` 优先读取 `printenv`、缺失时回退到 `.env`、再缺失则写 `'TODO'`。也就是说：
+
+- **CI**：靠 GitHub Secrets，无需 `.env`
+- **本地**：靠 `.env`，无需设环境变量
+- **任意环境临时覆盖**：`SUPABASE_URL=... make build` 走 env 即可
+
+### Pages 的非必需事项
+
+- CDN 上的 `@supabase/supabase-js` 与 Turnstile 是在浏览器侧加载，不影响构建。
+- 后端的 Edge Function 与 Supabase 表结构由 `supabase/` 目录管理，**和 GitHub Pages 部署完全解耦**，单独靠 `supabase` CLI 部署（见 `supabase/README.md`）。
 
 ## 常见问题
 
