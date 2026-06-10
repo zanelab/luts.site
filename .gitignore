@@ -25,6 +25,9 @@ yarn-error.log*
 .env.*
 !.env.example
 
+# Build artifact from .env injection
+assets/js/supabase-config.js
+
 # OS files
 .DS_Store
 .DS_Store?
