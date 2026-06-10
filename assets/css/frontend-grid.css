@@ -102,6 +102,10 @@ embed {
 	padding-bottom: 30px;
 }
 
+.main-row {
+	padding-left: 81px;
+}
+
 .container {
 	position: relative;
 	margin-right: auto;

@@ -63,6 +63,10 @@
   .side-header {
     display: none;
   }
+  
+	.main-row {
+		padding-left: 0px;
+	}
 
   .site-header.with-side {
     display: block;
