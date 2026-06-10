@@ -5,7 +5,7 @@
 - [x] 当前分支 `feature/blog-list-detail`，工作树干净
 
 ## 配置与导航
-- [x] `_config.yml` 增加 posts 的 `defaults`：`scope: { path: "", type: posts }`，`values: { layout: post, permalink: /blog/:slug/ }`，确认不影响 `_luts` collection
+- [x] `_config.yml` 增加 posts 的 `defaults`：`scope: { path: "", type: posts }`，`values: { layout: post, permalink: /blog/:slug.html }`，确认不影响 `_luts` collection
 - [x] `_data/navigation.yml` 新增 Blog 入口（位置位于 LUTs 之后），url 指向 `/blog/`，确认 header 自动呈现
 
 ## 资源
@@ -42,7 +42,7 @@
 - [x] 本地 `python3 -m http.server` 启动 `_site/`，访问验证：
   - [x] `/blog/` 列表渲染 4 篇，加载更多按钮可见
   - [x] 列表加载后卡片不重叠（沿用 LUTs 同款 isotope 通知机制）
-  - [x] 任一 `/blog/<slug>/` 详情页：标题、cover/占位图、tags、正文、prev/next 全部正常
+  - [x] 任一 `/blog/<slug>.html` 详情页：标题、cover/占位图、tags、正文、prev/next 全部正常
   - [x] 顶部导航出现 Blog，跳转正确
   - [x] `/lut-list/`、`/luts/...`、`/` 回归无问题
 - [x] 提交前 `git status` 确认只动了预期文件

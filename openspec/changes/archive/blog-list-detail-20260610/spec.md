@@ -157,3 +157,48 @@
 - Given 本变更修改 `_config.yml` 与 `_data/navigation.yml`
 - When 重新构建
 - Then `/lut-list/`、`/luts/<slug>/`、`/` 仍能正常渲染，无 JS 控制台报错
+
+---
+
+### Requirement: 文章路径使用 .html 后缀
+为避免历史实践中的目录式 URL，博客文章详情页路径须以 `.html` 结尾。
+
+#### Scenario: 详情页生成 .html 文件
+- Given `_posts/2026-06-10-welcome-to-the-blog.md`
+- When Jekyll 构建完成
+- Then 生成文件 `_site/blog/welcome-to-the-blog.html`（不是目录）
+
+#### Scenario: 列表与导航链接使用 .html
+- Given `/blog/` 列表或任一文章顶部/侧栏的 tag 链接
+- When 渲染
+- Then href 形如 `/blog/<slug>.html`
+
+---
+
+### Requirement: 标签筛选（按 ?tag= 查询字符串）
+文章与 LUTs 的标签可点击，点击后跳转至列表页并按该标签筛选卡片。
+
+#### Scenario: 标签渲染为链接
+- Given 列表页卡片或详情页正文旁的标签
+- When 渲染
+- Then 标签以 `<a class="tag-link" href="<list-page>?tag=<tag>">` 形式呈现
+
+#### Scenario: 列表页读取 ?tag 筛选
+- Given 用户访问 `/blog/?tag=教程`（或 `/lut-list/?tag=Wedding`）
+- When 列表页加载
+- Then 不含该标签的卡片被隐藏（基于 `data-tags` 属性），页面顶部显示 `tag-filter-banner`，提示当前筛选标签与匹配数
+
+#### Scenario: 清除筛选
+- Given 列表页处于筛选激活状态
+- When 用户点击 banner 中的"清除筛选"链接
+- Then 跳转到无 query 的列表页，所有卡片重新显示
+
+#### Scenario: 标签筛选应用于"加载更多"
+- Given 列表页已激活筛选，且点击"加载更多"
+- When 新卡片被追加
+- Then 新卡片同样按 `data-tags` 过滤，不匹配的隐藏
+
+#### Scenario: 无匹配结果
+- Given 当前 ?tag 没有对应文章
+- When 列表页渲染
+- Then 显示 `tag-filter-empty` 空状态文案与返回链接

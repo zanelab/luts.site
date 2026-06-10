@@ -9,7 +9,7 @@
 **选择：Jekyll 原生 `_posts/` 集合**（用户指定）。
 - 文件命名遵循 `YYYY-MM-DD-slug.md`，Jekyll 自动解析 `date` 与 `slug`。
 - 通过 `site.posts` 访问，默认按 date 倒序。
-- 在 `_config.yml` 用 `defaults` 设置 `permalink: /blog/:slug/` 与 `layout: post`，避免每篇文章重复写 front matter。
+- 在 `_config.yml` 用 `defaults` 设置 `permalink: /blog/:slug.html` 与 `layout: post`，避免每篇文章重复写 front matter。
 
 > **不选自定义 collection（如 `_blogs/`）的原因**：Jekyll 已经为 posts 提供了日期解析、排序、`site.posts`、内置 `excerpt` 等便利，没有引入自定义集合的必要。
 
@@ -32,6 +32,14 @@
 **选择：仅 prev / next 导航**。
 - 不渲染 LUTs 那套点赞/评论占位 UI。
 - prev/next 通过 `site.posts` 的索引获取（与 `_layouts/lut.html` 同样写法）。
+
+### 标签筛选
+**选择：标签渲染为链接，跳转 `?tag=...`，列表页 JS 读取筛选**。
+- 列表页与详情页所有标签（卡片内联标签、侧栏 Tags widget）均改为 `<a class="tag-link" href="<list-page>?tag=<tag>">`。
+- 列表页 `<article>` 携带 `data-tags="tag1,tag2"` 属性。
+- 页面加载时解析 `?tag=`，按 `data-tags` 隐藏不匹配卡片，触发 isotope `layout`，显示 `#tag-filter-banner`（带 `清除筛选` 链接）与 `#tag-filter-empty`（无匹配时）。
+- "加载更多"追加新卡片后同样按当前 `?tag` 过滤。
+- 同样的筛选机制同步应用到 `/lut-list/`，复用脚本模式。
 
 ### 列表与详情共享样式
 - 列表页和 LUTs 列表共用主题 `.blog-block / .blog-items / .blog-type-horizontal` 的 CSS，无需新增样式。
@@ -66,6 +74,8 @@ assets/images/blog/
 | cover | 可选 + 占位图 | 必填 / 无图变体 | 卡片 DOM 一致，最简实现 |
 | 详情底部 | prev/next | 含点赞/评论占位 | 用户决策，保持简洁 |
 | 导航 | 主导航加 Blog | 仅 footer 链接 | 用户决策，主入口可发现 |
+| 文章 URL | `/blog/:slug.html` | `/blog/:slug/` 目录式 | 用户后续要求 `.html` 后缀 |
+| 标签 | 链接 + `?tag=` 客户端筛选 | 纯展示文字 / 服务端筛选 | 用户后续要求；静态站无服务端，JS 筛选实现成本低 |
 
 ## 风险与应对
 1. **`_posts/` 日期文件名约束**：文件名必须形如 `YYYY-MM-DD-slug.md`，否则 Jekyll 跳过。  
@@ -76,5 +86,4 @@ assets/images/blog/
 
 ## 不在范围
 - RSS feed、评论、订阅、搜索专属页。
-- 标签筛选 UI（仅展示标签文字）。
-- 项目级 `spec/` 初始化（仍按"未来再做"处理）。
+- 多标签组合筛选（仅支持单标签）。
