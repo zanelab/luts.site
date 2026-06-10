@@ -1,6 +1,6 @@
 sections:
   - type: welcome
-    title: "Welcome"
+    title: "欢迎来到 luts.site"
     slides:
       - title: "从拍摄到后期轻松实现"
         subtitle: "胶片/电影质感"
@@ -16,14 +16,14 @@ sections:
         text_color: white
 
   - type: vision
-    title: "my vision"
+    title: "我的愿景"
     camera_image: /assets/images/2018/06/camera-img.png
-    content: "让每一位手机创作者，都能用最少的步骤，得到最想要的色彩。<br>不用昂贵设备，不用苦学调色，<br>一个LUT，几分钟，你的日常片段就能拥有电影般的情绪。"
+    content: "我发现手机摄影最大的痛点不是设备，而是色彩。网上其实有很多免费的LUT资源，但分散在各个论坛、网盘、外文网站，质量参差不齐，很多根本不适配手机软件，套上去要么过曝、要么肤色奇怪。于是我花大量时间从各个渠道收集、筛选、实测，只留下那些真正适合手机视频的.cube文件，并按风格分类。同时，我会为每一款LUT配上详细的导入教程和微调建议 —— 从剪映到VN，从LumaFusion到Lightroom Mobile。这个网站的定位很简单：做你手机调色的“精选超市 + 说明书”。你不用再去海量资源里大海捞针，也不用自己摸索怎么用。所有LUT和教程，我整理好了。"
     button_text: "跟我一起玩"
     button_url: "#"
 
   - type: portfolio
-    title: "portfolio"
+    title: "我的作品集"
     items:
       - title: "Being in Your Control"
         categories: ["Creative", "Portrait"]
@@ -43,52 +43,52 @@ sections:
           - /assets/images/2018/06/img3-1024x684.jpg
           - /assets/images/2018/06/img6-1024x733.jpg
           - /assets/images/2018/06/img8-1024x686.jpg
-      - title: "13 Myths About Room"
-        categories: ["Portrait"]
-        project_url: "index.html?p=241.html"
-        images:
-          - /assets/images/2018/06/img3-1024x684.jpg
-          - /assets/images/2018/06/img5-1024x684.jpg
-          - /assets/images/2018/06/img4-1024x1024.jpg
-      - title: "10 Warning Signs Of Your phone Demise"
-        categories: ["Creative"]
-        project_url: "index.html?p=242.html"
-        images:
-          - /assets/images/2018/06/img1-1024x1024.jpg
-      - title: "Here Is A Method That Is Helping foot"
-        categories: ["Fashion", "Other"]
-        project_url: "index.html?p=243.html"
-        images:
-          - /assets/images/2018/06/img5-1024x684.jpg
-          - /assets/images/2018/06/img4-1024x1024.jpg
-          - /assets/images/2018/06/img3-1024x684.jpg
-          - /assets/images/2018/06/img8-1024x686.jpg
-          - /assets/images/2018/06/img6-1024x733.jpg
-    view_all_url: "gallery/grid/col-3/index.html"
-    view_all_text: "view full portfolio"
+      # - title: "13 Myths About Room"
+      #   categories: ["Portrait"]
+      #   project_url: "index.html?p=241.html"
+      #   images:
+      #     - /assets/images/2018/06/img3-1024x684.jpg
+      #     - /assets/images/2018/06/img5-1024x684.jpg
+      #     - /assets/images/2018/06/img4-1024x1024.jpg
+      # - title: "10 Warning Signs Of Your phone Demise"
+      #   categories: ["Creative"]
+      #   project_url: "index.html?p=242.html"
+      #   images:
+      #     - /assets/images/2018/06/img1-1024x1024.jpg
+      # - title: "Here Is A Method That Is Helping foot"
+      #   categories: ["Fashion", "Other"]
+      #   project_url: "index.html?p=243.html"
+      #   images:
+      #     - /assets/images/2018/06/img5-1024x684.jpg
+      #     - /assets/images/2018/06/img4-1024x1024.jpg
+      #     - /assets/images/2018/06/img3-1024x684.jpg
+      #     - /assets/images/2018/06/img8-1024x686.jpg
+      #     - /assets/images/2018/06/img6-1024x733.jpg
+    view_all_url: "lut-list/"
+    view_all_text: "查看所有颜色映射表"
 
-  - type: testimonials
-    title: "testimonials"
-    items:
-      - quote: "But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound the actual teachings of the great explorer of the truth, the master-builder of human happiness."
-        author: "mark wallberg"
-        role: "fashion designer"
-        avatar: /assets/images/2018/06/portrait5-262x300.jpg
-      - quote: "But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound the actual teachings of the great explorer of the truth, the master-builder of human happiness."
-        author: "Sara Jein"
-        role: "designer"
-        avatar: /assets/images/2018/06/portrait4-283x300.jpg
-      - quote: "But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound the actual teachings of the great explorer of the truth, the master-builder of human happiness."
-        author: "Winston Mers"
-        role: "fashion designer"
-        avatar: /assets/images/2018/06/portrait2-283x300.jpg
+  # - type: testimonials
+  #   title: "客户评价"
+  #   items:
+  #     - quote: "But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound the actual teachings of the great explorer of the truth, the master-builder of human happiness."
+  #       author: "mark wallberg"
+  #       role: "fashion designer"
+  #       avatar: /assets/images/2018/06/portrait5-262x300.jpg
+  #     - quote: "But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound the actual teachings of the great explorer of the truth, the master-builder of human happiness."
+  #       author: "Sara Jein"
+  #       role: "designer"
+  #       avatar: /assets/images/2018/06/portrait4-283x300.jpg
+  #     - quote: "But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound the actual teachings of the great explorer of the truth, the master-builder of human happiness."
+  #       author: "Winston Mers"
+  #       role: "fashion designer"
+  #       avatar: /assets/images/2018/06/portrait2-283x300.jpg
 
   - type: about
-    title: "about me"
+    title: "关于我"
     background_image: /assets/images/2018/06/bg-about-me.jpg
-    greeting: "nice to meet you"
-    name: "John Sallivan"
-    bio: "I was born in the UK and raised in the African desert by bushmen. Okay, that might be a stretch &#8211; my parents were from the UK, but I did grow up shaking Kalahari sand out of my shoes."
+    greeting: "很高兴见到你"
+    name: "Zane Deng"
+    bio: "本站分享的LUT预设均收集自公开网络渠道（如免费资源站、作者公开分享等），部分无法追溯原作者。如果你发现你的作品被收录且不希望被分享，请联系我，我会立即下架。我的初衷仅是整理、测试与教学，不售卖任何资源。"
     stats:
       - icon: "beautiful-camera-lens-hood"
         count: "132"

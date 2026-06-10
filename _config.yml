@@ -1,5 +1,5 @@
-title: Sansara
-description: A Jekyll site built from the Sansara WordPress theme
+title: LUTs.site
+description: 让每一位手机创作者，都能用最少的步骤，得到最想要的色彩。不用昂贵设备，不用苦学调色，一个LUT，几分钟，你的日常片段就能拥有电影般的情绪。
 theme: null
 plugins:
   - jekyll-sass-converter
