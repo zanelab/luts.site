@@ -6,6 +6,10 @@
   url: /lut-list/
   target: _self
 
+- title: 博客
+  url: /blog/
+  target: _self
+
 - title: 使用教程
   url: /tutorials.html
   target: _self
