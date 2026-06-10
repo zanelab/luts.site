@@ -27,11 +27,19 @@ body_class: wp-singular page-template page-template-template-landing page-templa
                 <span>LUTs</span>
               </h2>
 
+              <!-- Tag filter banner -->
+              <div id="tag-filter-banner" class="tag-filter-banner" style="display: none;">
+                <span>当前标签筛选：</span>
+                <strong class="tag-filter-name"></strong>
+                <span class="tag-filter-count"></span>
+                <a href="/lut-list/" class="tag-filter-clear">清除筛选</a>
+              </div>
+
               <div class="blog-block">
                 <div class="blog-items row blog-type-horizontal blog-luts-list load-wrap" id="lut-list-container">
 
                   {% for lut in site.luts limit: 4 %}
-                  <article class="blog-item col-xs-12" data-index="{{ forloop.index0 }}">
+                  <article class="blog-item col-xs-12" data-index="{{ forloop.index0 }}" data-tags="{{ lut.tags | join: ',' | default: '' }}">
                     <div class="wrap">
                       <div class="img comparison-slider" data-before="{{ lut.beforeImg }}" data-after="{{ lut.afterImg }}">
                         <div class="comparison-before" style="background-image: url('{{ lut.beforeImg }}');"></div>
@@ -55,7 +63,7 @@ body_class: wp-singular page-template page-template-template-landing page-templa
                           {% if lut.tags %}
                           <div class="categories">
                             <i class="ui-interface-tag"></i>
-                            <span>{% for tag in lut.tags %}{% if forloop.last == false %}{{ tag }}, {% else %}{{ tag }}{% endif %}{% endfor %}</span>
+                            <span>{% for tag in lut.tags %}<a href="/lut-list/?tag={{ tag | url_encode }}" class="tag-link">{{ tag }}</a>{% unless forloop.last %}, {% endunless %}{% endfor %}</span>
                           </div>
                           {% endif %}
                         </div>
@@ -71,6 +79,11 @@ body_class: wp-singular page-template page-template-template-landing page-templa
                   </article>
                   {% endfor %}
 
+                </div>
+
+                <!-- Empty state for filter -->
+                <div id="tag-filter-empty" class="tag-filter-empty" style="display: none;">
+                  <p>没有匹配该标签的 LUT。<a href="/lut-list/">查看全部 →</a></p>
                 </div>
 
                 <!-- Load more button -->
@@ -180,10 +193,59 @@ body_class: wp-singular page-template page-template-template-landing page-templa
 
 .before-label { left: 10px; }
 .after-label { right: 10px; }
+
+.tag-link {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px dotted rgba(255, 255, 255, 0.4);
+  transition: color 0.2s, border-color 0.2s;
+}
+.tag-link:hover {
+  color: #fff;
+  border-bottom-color: #fff;
+}
+.tag-filter-banner {
+  margin: 0 0 20px;
+  padding: 12px 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 3px solid #fff;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.75);
+}
+.tag-filter-banner strong {
+  color: #fff;
+  margin: 0 4px;
+}
+.tag-filter-banner .tag-filter-count {
+  margin-left: 8px;
+  opacity: 0.6;
+}
+.tag-filter-banner .tag-filter-clear {
+  margin-left: 14px;
+  color: #fff;
+  text-decoration: underline;
+}
+.tag-filter-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: rgba(255, 255, 255, 0.6);
+}
+.tag-filter-empty a {
+  color: #fff;
+  text-decoration: underline;
+  margin-left: 6px;
+}
 </style>
 
 <script>
 (function($) {
+  var ACTIVE_TAG = null;
+
+  function getActiveTag() {
+    var match = window.location.search.match(/[?&]tag=([^&]+)/);
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+
   function initSlider($slider) {
     if ($slider.data('slider-initialized')) return;
     $slider.data('slider-initialized', true);
@@ -231,14 +293,42 @@ body_class: wp-singular page-template page-template-template-landing page-templa
     });
   }
 
+  function applyFilter($container) {
+    if (!ACTIVE_TAG) return;
+    var visible = 0;
+    $container.find('article.blog-item').each(function() {
+      var tags = ($(this).attr('data-tags') || '').split(',');
+      if (tags.indexOf(ACTIVE_TAG) === -1) {
+        $(this).hide();
+      } else {
+        $(this).show();
+        visible++;
+      }
+    });
+    var $banner = $('#tag-filter-banner');
+    if (visible === 0) {
+      $('#tag-filter-empty').show();
+    } else {
+      $('#tag-filter-empty').hide();
+    }
+    $banner.find('.tag-filter-name').text(ACTIVE_TAG);
+    $banner.find('.tag-filter-count').text('（共 ' + visible + ' 个）');
+    $banner.show();
+    if ($container.hasClass('isotope')) {
+      $container.isotope('layout');
+    }
+  }
+
   $(document).ready(function() {
+    ACTIVE_TAG = getActiveTag();
+    var $container = $('#lut-list-container');
     initAllSliders();
+    applyFilter($container);
 
     $('#load-more-luts').on('click', function() {
       var $btn = $(this);
       var offset = $btn.data('offset');
       var total = {{ site.luts.size }};
-      var $container = $('#lut-list-container');
       var lutsPerPage = 4;
 
       $btn.find('span').text('加载中...');
@@ -250,7 +340,7 @@ body_class: wp-singular page-template page-template-template-landing page-templa
         {% for lut in site.luts %}
         {% if forloop.index0 >= 4 %}
         if ({{ forloop.index0 }} < offset + lutsPerPage && {{ forloop.index0 }} < total) {
-          var html = '<article class="blog-item col-xs-12" data-index="{{ forloop.index0 }}">' +
+          var html = '<article class="blog-item col-xs-12" data-index="{{ forloop.index0 }}" data-tags="{% if lut.tags %}{{ lut.tags | join: ',' | escape }}{% endif %}">' +
             '<div class="wrap">' +
             '<div class="img comparison-slider" data-before="{{ lut.beforeImg }}" data-after="{{ lut.afterImg }}">' +
             '<div class="comparison-before" style="background-image: url(\'{{ lut.beforeImg }}\');"></div>' +
@@ -265,7 +355,7 @@ body_class: wp-singular page-template page-template-template-landing page-templa
             '<div class="comparison-label after-label">After</div>' +
             '</div>' +
             '<div class="content">' +
-            '<h5><a href="{{ lut.url }}">{{ lut.title }}</a></h5>' +
+            '<h5><a href="{{ lut.url }}">{{ lut.title | escape }}</a></h5>' +
             '<div class="blog-detail">' +
             '<div class="date">' +
             '<i class="ui-interface-calendar"></i>' +
@@ -274,11 +364,11 @@ body_class: wp-singular page-template page-template-template-landing page-templa
             {% if lut.tags %}
             '<div class="categories">' +
             '<i class="ui-interface-tag"></i>' +
-            '<span>{% for tag in lut.tags %}{% if forloop.last == false %}{{ tag }}, {% else %}{{ tag }}{% endif %}{% endfor %}</span>' +
+            '<span>{% for tag in lut.tags %}<a href="/lut-list/?tag={{ tag | url_encode }}" class="tag-link">{{ tag | escape }}</a>{% unless forloop.last %}, {% endunless %}{% endfor %}</span>' +
             '</div>' +
             {% endif %}
             '</div>' +
-            '<div class="text">{% if lut.excerpt %}{{ lut.excerpt }}{% else %}{{ lut.content | strip_html | truncate: 200 }}{% endif %}</div>' +
+            '<div class="text">{% if lut.excerpt %}{{ lut.excerpt | escape }}{% else %}{{ lut.content | strip_html | truncate: 200 | escape }}{% endif %}</div>' +
             '</div>' +
             '</div>' +
             '</article>';
@@ -303,6 +393,10 @@ body_class: wp-singular page-template page-template-template-landing page-templa
         } else {
           $btn.find('span').text('加载更多');
           $btn.prop('disabled', false);
+        }
+
+        if (ACTIVE_TAG) {
+          applyFilter($container);
         }
       }, 300);
     });

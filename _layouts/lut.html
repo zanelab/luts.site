@@ -50,7 +50,7 @@ body_class: wp-singular page-template page-template-template-landing page-templa
                 {% if page.tags %}
                 <div class="categories">
                   <i class="ui-interface-tag"></i>
-                  <span>{% for tag in page.tags %}{% if forloop.last == false %}{{ tag }}, {% else %}{{ tag }}{% endif %}{% endfor %}</span>
+                  <span>{% for tag in page.tags %}<a href="/lut-list/?tag={{ tag | url_encode }}" class="tag-link">{{ tag }}</a>{% unless forloop.last %}, {% endunless %}{% endfor %}</span>
                 </div>
                 {% endif %}
               </div>
@@ -141,7 +141,7 @@ body_class: wp-singular page-template page-template-template-landing page-templa
               <h6 class="widget-title">Tags</h6>
               <div class="tagcloud">
                 {% for tag in page.tags %}
-                <span class="tag-cloud-link">{{ tag }}</span>
+                <a href="/lut-list/?tag={{ tag | url_encode }}" class="tag-cloud-link">{{ tag }}</a>
                 {% endfor %}
               </div>
             </div>

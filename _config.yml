@@ -15,3 +15,11 @@ collections:
     output: true
   luts:
     output: true
+
+defaults:
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: post
+      permalink: /blog/:slug.html

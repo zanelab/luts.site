@@ -1,0 +1,161 @@
+---
+layout: base
+title: {{ page.title }}
+body_class: wp-singular page-template page-template-template-landing page-template-template-landing-php page page-id-263 wp-theme-sansara woocommerce-no-js header-type-left_side header-nav-type-visible_menu header-space-no header-container-container popup_download_yes project_details_yes wrap_lines_no mobile_no site-dark chrome osx wpb-js-composer js-comp-ver-6.6.0 vc_responsive
+---
+
+<div id="all" class="site">
+  <!-- Preloader -->
+  <div class="preloader-default-area">
+    <div class="preloader-default">
+      <div class="label">LUTS</div>
+    </div>
+    <div class="line"></div>
+  </div>
+
+  <!-- Header -->
+  {% include header.html %}
+
+  <main class="main-row">
+    <div class="container">
+      <h1 class="h2 page-title">{{ page.title }}</h1>
+
+      <div class="row index-sidebar-row">
+        <!-- Main Content -->
+        <div class="col-xs-12 col-md-8">
+
+          <div class="post-{{ forloop.index }} post type-post status-publish format-standard has-post-thumbnail hentry">
+            <div class="site-content">
+
+              <!-- Cover -->
+              <div class="blog-post-cover">
+                <img src="{{ page.cover | default: '/assets/images/blog/default-cover.svg' }}" alt="{{ page.title }}" loading="lazy" />
+              </div>
+
+              <!-- Blog Detail -->
+              <div class="blog-detail">
+                <div class="date">
+                  <i class="ui-interface-calendar"></i>
+                  <span>{{ page.date | date: "%d.%m.%Y" }}</span>
+                </div>
+                {% if page.tags and page.tags.size > 0 %}
+                <div class="categories">
+                  <i class="ui-interface-tag"></i>
+                  <span>{% for tag in page.tags %}<a href="/blog/?tag={{ tag | url_encode }}" class="tag-link">{{ tag }}</a>{% unless forloop.last %}, {% endunless %}{% endfor %}</span>
+                </div>
+                {% endif %}
+              </div>
+
+              <!-- Post Content -->
+              <div class="post-content">
+                <div class="clearfix">
+                  <div class="vc_row wpb_row vc_row-fluid">
+                    <div class="wpb_column vc_column_container vc_col-sm-12">
+                      <div class="vc_column-inner">
+                        <div class="wpb_wrapper">
+                          <div class="wpb_text_column wpb_content_element">
+                            <div class="wpb_wrapper">
+                              {{ content }}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Post Bottom: prev/next only -->
+            <div class="post-bottom">
+              {% assign total = site.posts.size %}
+              {% for post in site.posts %}
+                {% if post.url == page.url %}
+                  {% if forloop.index0 > 0 %}
+                    {% assign prev_index = forloop.index0 | minus: 1 %}
+                    {% assign prev_post = site.posts[prev_index] %}
+                  {% endif %}
+                  {% if forloop.index < total %}
+                    {% assign next_index = forloop.index %}
+                    {% assign next_post = site.posts[next_index] %}
+                  {% endif %}
+                {% endif %}
+              {% endfor %}
+
+              {% if prev_post %}
+              <a href="{{ prev_post.url }}" class="post-nav prev">
+                <i class="solid-arrow-collection-left-chevron-1"></i>
+                <span>previous post</span>
+              </a>
+              {% endif %}
+              {% if next_post %}
+              <a href="{{ next_post.url }}" class="post-nav next">
+                <span>next post</span>
+                <i class="solid-arrow-collection-right-chevron-1"></i>
+              </a>
+              {% endif %}
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Sidebar -->
+        <div class="s-sidebar col-xs-12 col-md-4">
+          <div class="w">
+
+            <!-- Search -->
+            <div id="search-3" class="widget widget_search">
+              <form role="search" method="get" class="searchform" action="/blog/">
+                <button type="submit" class="searchsubmit" value=""><i class="base-icons-magnifying-glass"></i></button>
+                <div><input type="text" value="" placeholder="Type and hit enter" name="s" class="input" /></div>
+              </form>
+            </div>
+
+            <!-- Tags -->
+            {% if page.tags and page.tags.size > 0 %}
+            <div id="tag_cloud-2" class="widget widget_tag_cloud">
+              <h6 class="widget-title">Tags</h6>
+              <div class="tagcloud">
+                {% for tag in page.tags %}
+                <a href="/blog/?tag={{ tag | url_encode }}" class="tag-cloud-link">{{ tag }}</a>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+
+            <!-- Recent Posts -->
+            <div id="blog_post-2" class="widget widget_blog_post">
+              <h6 class="widget-title">Recent Posts</h6>
+              <div class="blog-post-widget widget">
+                {% for post in site.posts limit: 4 %}
+                <div class="item">
+                  <a href="{{ post.url }}" class="image" style="background-image: url('{{ post.cover | default: '/assets/images/blog/default-cover.svg' }}')"></a>
+                  <div class="text">
+                    <a href="{{ post.url }}" class="name">{{ post.title }}</a>
+                    <div class="blog-detail"><span>{{ post.date | date: "%d.%m.%Y" }}</span></div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<style>
+.blog-post-cover {
+  margin-bottom: 30px;
+}
+.blog-post-cover img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+</style>
