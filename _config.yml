@@ -10,6 +10,16 @@ sass:
   style: compressed
   sass_dir: _sass
 
+exclude:
+  - AGENTS.md
+  - spec/
+  - openspec/
+  - .claude/
+  - Gemfile
+  - Gemfile.lock
+  - vendor/
+  - .bundle/
+
 collections:
   pages:
     output: true
