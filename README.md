@@ -181,7 +181,7 @@ Content-Type: application/json
 
 ### 必需的 GitHub Secrets
 
-在 repo `Settings → Secrets and variables → Actions → Repository secrets` 添加以下四个 secrets（**和 `.env` 同名**，workflow 已配置好映射）：
+在 repo `Settings → Environments → github-pages → Configuration → Secrets` 添加以下四个 secrets（**和 `.env` 同名**，workflow 已配置好映射）：
 
 | Secret 名 | 对应 `.env` 字段 | 备注 |
 |-----------|-----------------|------|
@@ -190,9 +190,13 @@ Content-Type: application/json
 | `SUPABASE_EDGE_FUNCTION` | `SUPABASE_EDGE_FUNCTION` | 必填，通常是 `request-lut-download` |
 | `TURNSTILE_SITE_KEY` | `TURNSTILE_SITE_KEY` | 必填，`0x` 开头 |
 
+> **为什么放在 Environment 而不是 Repository level？**
+> GitHub Actions 里 `${{ secrets.X }}` 在没有 `environment:` 声明的 job 上只能读 Repository secrets；放在 `github-pages` Environment 下、且 workflow 的 `build` job 已声明 `environment: github-pages`，build 和 deploy 两个 job 都能读到，是这个仓库当前约定。
+> 如果你换成 Repository secrets，记得把 workflow 里 `build.environment` 那一段去掉。
+
 workflow 中通过 `env:` 注入到 `make build`，由 `script/build-config.sh` 优先读取 `printenv`、缺失时回退到 `.env`、再缺失则写 `'TODO'`。也就是说：
 
-- **CI**：靠 GitHub Secrets，无需 `.env`
+- **CI**：靠 Environment secrets，无需 `.env`
 - **本地**：靠 `.env`，无需设环境变量
 - **任意环境临时覆盖**：`SUPABASE_URL=... make build` 走 env 即可
 

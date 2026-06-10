@@ -1,6 +1,7 @@
 # Build LUTs.site with Jekyll + supabase-config.js (via Makefile) and deploy to GitHub Pages.
-# The build step reads four Supabase/Turnstile values from repository Secrets and
-# passes them through `script/build-config.sh` -> `assets/js/supabase-config.js`.
+# The build step reads four Supabase/Turnstile values from the github-pages
+# Environment's Secrets (not Repository secrets) and passes them through
+# `script/build-config.sh` -> `assets/js/supabase-config.js`.
 name: Deploy LUTs.site to GitHub Pages
 
 on:
@@ -20,6 +21,13 @@ concurrency:
 
 jobs:
   build:
+    # Declare the environment so the build step can read Environment secrets
+    # (SUPABASE_* / TURNSTILE_*) the same way the deploy step does. Without
+    # this, `${{ secrets.X }}` in the build job falls through to Repository
+    # secrets (which we don't use) and lands as empty -> 'TODO' in
+    # assets/js/supabase-config.js.
+    environment:
+      name: github-pages
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
