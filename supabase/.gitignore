@@ -1,0 +1,13 @@
+# Supabase deployment artifacts and Edge Function ignores
+
+# Local Supabase CLI temp files
+.branches/
+.temp/
+
+# Local env files for `supabase functions serve`
+**/.env
+**/.env.local
+
+# Compiled / cached files
+**/node_modules/
+**/.cache/

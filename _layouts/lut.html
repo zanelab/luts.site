@@ -1,8 +1,10 @@
 ---
 layout: base
 title: {{ page.title }}
-body_class: wp-singular page-template page-template-template-landing page-template-template-landing-php page page-id-263 wp-theme-sansara woocommerce-no-js header-type-left_side header-nav-type-visible_menu header-space-no header-container-container popup_download_yes project_details_yes wrap_lines_no mobile_no site-dark chrome osx wpb-js-composer js-comp-ver-6.6.0 vc_responsive
+body_class: lut-detail-page wp-singular page-template page-template-template-landing page-template-template-landing-php page page-id-263 wp-theme-sansara woocommerce-no-js header-type-left_side header-nav-type-visible_menu header-space-no header-container-container popup_download_yes project_details_yes wrap_lines_no mobile_no site-dark chrome osx wpb-js-composer js-comp-ver-6.6.0 vc_responsive
 ---
+
+{% include head-scripts.html %}
 
 <div id="all" class="site">
   <!-- Preloader -->
@@ -117,12 +119,13 @@ body_class: wp-singular page-template page-template-template-landing page-templa
         <div class="s-sidebar col-xs-12 col-md-4">
           <div class="w">
 
-            <!-- Search -->
-            <div id="search-3" class="widget widget_search">
-              <form role="search" method="get" class="searchform" action="/lut-list/">
-                <button type="submit" class="searchsubmit" value=""><i class="base-icons-magnifying-glass"></i></button>
-                <div><input type="text" value="" placeholder="Type and hit enter" name="s" class="input" /></div>
-              </form>
+            <!-- Download CTA -->
+            <div id="lut-download-cta" class="widget widget-lut-download">
+              <button type="button" class="lut-download-trigger" data-lut-id="{{ page.lutId }}" data-lut-title="{{ page.title | escape }}">
+                <i class="solid-icon-collection-download"></i>
+                <span>下载 LUT</span>
+              </button>
+              <p class="lut-download-hint">把下载链接发送到你的邮箱，链接 30 分钟内有效。</p>
             </div>
 
             <!-- Tags -->
@@ -160,6 +163,33 @@ body_class: wp-singular page-template page-template-template-landing page-templa
     </div>
   </main>
 </div>
+
+<!-- Download Modal -->
+<dialog id="lut-download-modal" class="lut-modal" aria-labelledby="lut-modal-title">
+  <form method="dialog" class="lut-modal-form">
+    <header class="lut-modal-header">
+      <h3 id="lut-modal-title">下载 LUT</h3>
+      <button type="submit" class="lut-modal-close" aria-label="关闭" value="close">×</button>
+    </header>
+
+    <div class="lut-modal-body">
+      <div class="lut-modal-error-banner" hidden></div>
+
+      <label class="lut-modal-field">
+        <span>邮箱地址</span>
+        <input type="email" name="email" required autocomplete="email" placeholder="you@example.com" />
+      </label>
+
+      <div class="lut-modal-turnstile" data-sitekey=""></div>
+
+      <button type="button" class="lut-modal-submit" disabled>
+        <span class="lut-modal-submit-label">发送到我的邮箱</span>
+      </button>
+
+      <div class="lut-modal-status" hidden></div>
+    </div>
+  </form>
+</dialog>
 
 <style>
 .lut-comparison-slider {
@@ -242,6 +272,240 @@ body_class: wp-singular page-template page-template-template-landing page-templa
 
 .lut-comparison-slider .before-label { left: 14px; }
 .lut-comparison-slider .after-label { right: 14px; }
+
+/* ===== Sticky Sidebar (desktop only) =====
+ * Theme sets `#all { overflow: hidden }` which kills `position: sticky`
+ * (any overflow ancestor becomes the sticky containing block and that
+ * ancestor doesn't scroll). Also Bootstrap 3 floats columns instead of
+ * stretching them, so we switch the row to flex at md+ to give the
+ * sticky column a proper containing block height.
+ */
+body.lut-detail-page #all {
+  overflow: visible;
+}
+
+@media (min-width: 992px) {
+  body.lut-detail-page .index-sidebar-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+  body.lut-detail-page .index-sidebar-row > [class*="col-"] {
+    float: none;
+  }
+  body.lut-detail-page .index-sidebar-row .s-sidebar {
+    position: sticky;
+    top: 20px;
+    align-self: flex-start;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+  }
+  body.lut-detail-page .index-sidebar-row .s-sidebar::-webkit-scrollbar {
+    width: 6px;
+  }
+  body.lut-detail-page .index-sidebar-row .s-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.15);
+    border-radius: 3px;
+  }
+}
+
+/* ===== Download CTA ===== */
+.widget-lut-download {
+  margin-bottom: 30px;
+  padding: 24px 0px;
+  text-align: center;
+}
+
+.lut-download-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px 24px;
+  background: #ebb85e;
+  color: #95680d;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.lut-download-trigger:hover {
+  transform: translateY(-2px);
+  background: #2d2d2d;
+  color: #ebb85e;
+}
+.lut-download-trigger:active {
+  transform: translateY(0);
+}
+.lut-download-trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.lut-download-trigger i {
+  font-size: 18px;
+}
+.lut-download-hint {
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.5;
+}
+
+/* ===== Download Modal ===== */
+.lut-modal {
+  width: 90%;
+  max-width: 440px;
+  padding: 0;
+  border: 1px solid rgba(250, 129, 0, 0.229);
+  background: #1a1a1a;
+  color: #eee;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.lut-modal::backdrop {
+  background: rgba(0,0,0,0.65);
+}
+.lut-modal-form {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+.lut-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.lut-modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.lut-modal-close {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  color: #eee;
+  border: none;
+  border-radius: 4px;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.lut-modal-close:hover {
+  background: rgba(255,255,255,0.08);
+}
+.lut-modal-body {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.lut-modal-error-banner {
+  padding: 12px 14px;
+  background: rgba(255, 80, 80, 0.12);
+  border: 1px solid rgba(255, 80, 80, 0.35);
+  color: #ffb3b3;
+  font-size: 13px;
+  border-radius: 5px;
+  line-height: 1.5;
+}
+.lut-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.lut-modal-field > span {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.6);
+}
+.lut-modal-field input {
+  padding: 12px 14px;
+  background: #0e0e0e;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  font-size: 14px;
+  border-radius: 5px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.lut-modal-field input:focus {
+  border-color: rgba(255,255,255,0.4);
+}
+.lut-modal-turnstile {
+  display: flex;
+  justify-content: center;
+  min-height: 65px;
+}
+.lut-modal-submit {
+  padding: 13px 20px;
+  background: #ebb85e;
+  color: #95680d;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+.lut-modal-submit:hover:not(:disabled) {
+  background: #2d2d2d;
+  color: #ebb85e;
+}
+.lut-modal-submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.lut-modal-submit-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+  vertical-align: -2px;
+  border: 2px solid rgba(17,17,17,0.25);
+  border-top-color: #111;
+  border-radius: 50%;
+  animation: lut-spin 0.8s linear infinite;
+}
+@keyframes lut-spin {
+  to { transform: rotate(360deg); }
+}
+.lut-modal-status {
+  padding: 12px 14px;
+  font-size: 13px;
+  border-radius: 5px;
+  line-height: 1.5;
+  text-align: center;
+}
+.lut-modal-status.is-success {
+  background: rgba(80, 200, 120, 0.12);
+  border: 1px solid rgba(80, 200, 120, 0.4);
+  color: #a7e7bd;
+}
+.lut-modal-status.is-error {
+  background: rgba(255, 80, 80, 0.12);
+  border: 1px solid rgba(255, 80, 80, 0.35);
+  color: #ffb3b3;
+}
+.lut-modal-status.is-info {
+  background: rgba(120, 170, 255, 0.1);
+  border: 1px solid rgba(120, 170, 255, 0.3);
+  color: #cfe0ff;
+}
 </style>
 
 <script>
@@ -294,3 +558,6 @@ body_class: wp-singular page-template page-template-template-landing page-templa
   });
 })(jQuery);
 </script>
+
+<script src="{{ '/assets/js/supabase-config.js' | relative_url }}"></script>
+<script src="{{ '/assets/js/lut-download.js' | relative_url }}" defer></script>
