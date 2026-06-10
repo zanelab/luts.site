@@ -2,6 +2,7 @@
 layout: lut
 title: 阳光灿烂
 date: 2026-06-10
+lutId: TBD-sun-shine
 excerpt: "其核心作用是模拟阳光明媚、温暖明亮的视觉氛围。常用于“黄金时刻”（日出/日落）、夏日午后、海滩等场景，营造阳光灿烂、温暖怀旧的观感。"
 beforeImg: /assets/images/luts/sun-shine/before.jpg
 afterImg: /assets/images/luts/sun-shine/after.jpg

@@ -33,3 +33,8 @@ defaults:
     values:
       layout: post
       permalink: /blog/:slug.html
+  - scope:
+      path: ""
+      type: luts
+    values:
+      body_class: site-dark lut-detail-page
