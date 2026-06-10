@@ -8,7 +8,7 @@ body_class: wp-singular page-template page-template-template-landing page-templa
   <!-- Preloader -->
   <div class="preloader-default-area">
     <div class="preloader-default">
-      <div class="label">LUTS</div>
+      <div class="label">{{ page.title }}</div>
     </div>
     <div class="line"></div>
   </div>
@@ -37,8 +37,8 @@ body_class: wp-singular page-template page-template-template-landing page-templa
                     <path d="M12 5L17 10L12 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </div>
-                <div class="comparison-label before-label">Before</div>
-                <div class="comparison-label after-label">After</div>
+                <div class="comparison-label before-label">使用前</div>
+                <div class="comparison-label after-label">使用后</div>
               </div>
 
               <!-- Blog Detail -->
@@ -79,16 +79,6 @@ body_class: wp-singular page-template page-template-template-landing page-templa
 
             <!-- Post Bottom -->
             <div class="post-bottom">
-              <div class="pb-like">
-                <a href="#" class="zilla-likes" data-post-id="{{ forloop.index }}" data-postfix=" likes">
-                  <i class="ui-interface-heart"></i>
-                  <span>0 <span> likes</span></span>
-                </a>
-              </div>
-              <div class="pb-comments">
-                <i class="ui-interface-chat"></i>
-                <span>0 Comments</span>
-              </div>
 
               <!-- Prev/Next Navigation -->
               {% assign total = site.luts.size %}
@@ -108,12 +98,12 @@ body_class: wp-singular page-template page-template-template-landing page-templa
               {% if prev_lut %}
               <a href="{{ prev_lut.url }}" class="post-nav prev">
                 <i class="solid-arrow-collection-left-chevron-1"></i>
-                <span>previous post</span>
+                <span>上一篇</span>
               </a>
               {% endif %}
               {% if next_lut %}
               <a href="{{ next_lut.url }}" class="post-nav next">
-                <span>next post</span>
+                <span>下一篇</span>
                 <i class="solid-arrow-collection-right-chevron-1"></i>
               </a>
               {% endif %}
@@ -138,7 +128,7 @@ body_class: wp-singular page-template page-template-template-landing page-templa
             <!-- Tags -->
             {% if page.tags %}
             <div id="tag_cloud-2" class="widget widget_tag_cloud">
-              <h6 class="widget-title">Tags</h6>
+              <h6 class="widget-title">标签</h6>
               <div class="tagcloud">
                 {% for tag in page.tags %}
                 <a href="/lut-list/?tag={{ tag | url_encode }}" class="tag-cloud-link">{{ tag }}</a>
@@ -149,7 +139,7 @@ body_class: wp-singular page-template page-template-template-landing page-templa
 
             <!-- Recent LUTs -->
             <div id="blog_post-2" class="widget widget_blog_post">
-              <h6 class="widget-title">Recent LUTs</h6>
+              <h6 class="widget-title">最近的LUT</h6>
               <div class="blog-post-widget widget">
                 {% for lut in site.luts limit: 4 %}
                 <div class="item">

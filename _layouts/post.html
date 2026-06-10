@@ -86,12 +86,12 @@ body_class: wp-singular page-template page-template-template-landing page-templa
               {% if prev_post %}
               <a href="{{ prev_post.url }}" class="post-nav prev">
                 <i class="solid-arrow-collection-left-chevron-1"></i>
-                <span>previous post</span>
+                <span>上一篇</span>
               </a>
               {% endif %}
               {% if next_post %}
               <a href="{{ next_post.url }}" class="post-nav next">
-                <span>next post</span>
+                <span>下一篇</span>
                 <i class="solid-arrow-collection-right-chevron-1"></i>
               </a>
               {% endif %}
@@ -116,7 +116,7 @@ body_class: wp-singular page-template page-template-template-landing page-templa
             <!-- Tags -->
             {% if page.tags and page.tags.size > 0 %}
             <div id="tag_cloud-2" class="widget widget_tag_cloud">
-              <h6 class="widget-title">Tags</h6>
+              <h6 class="widget-title">标签</h6>
               <div class="tagcloud">
                 {% for tag in page.tags %}
                 <a href="/blog/?tag={{ tag | url_encode }}" class="tag-cloud-link">{{ tag }}</a>
@@ -127,7 +127,7 @@ body_class: wp-singular page-template page-template-template-landing page-templa
 
             <!-- Recent Posts -->
             <div id="blog_post-2" class="widget widget_blog_post">
-              <h6 class="widget-title">Recent Posts</h6>
+              <h6 class="widget-title">最近文章</h6>
               <div class="blog-post-widget widget">
                 {% for post in site.posts limit: 4 %}
                 <div class="item">
