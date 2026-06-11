@@ -50,7 +50,7 @@
         .site-footer .logo img { width: 96px; }
     </style>
 </head>
-<body class="{{ page.body_class | default: 'site-dark' }}">
+<body class="{{ page.body_class | default: 'site-dark' }}"{% if page.layout == 'admin' %} data-auth-auto-open="true"{% endif %}>
     {{ content }}
 
     <!-- Theme JS -->

@@ -9,7 +9,8 @@
 | 入口位置 | 顶导右侧、主菜单之后、`.auth-nav` 节点之前 | 同一容器（`.fr`）内 |
 | 入口形式 | 静态文字链接（`<a>`），无 JS 依赖 | 公开页不加载 supabase 也能看到 |
 | 入口 href | `/admin/submissions/` | 与 admin 队列页共用，自动弹模态 |
-| 自动弹模态的页面 | 仅 admin 布局 | `<body data-auth-auto-open="true">` 信号 |
+| 自动弹模态机制 | base.html 检查 `page.layout == 'admin'` | 不污染 layout front matter，避免传染到其他布局 |
+| 自动弹模态的页面 | 仅 admin 布局 | base.html 在 `page.layout == 'admin'` 时输出 `data-auth-auto-open="true"` |
 | 不自动弹的页面 | contribute / lut 布局 | 投稿匿名、详情页与登录无关 |
 | 视觉风格 | 与现有菜单项一致（discreet） | 移动端也显示 |
 | 已登录并存 | 头像 + 「🔒 管理」双入口 | 不互斥 |
@@ -56,9 +57,9 @@
 
 ### Requirement: admin 布局访问无 session 时自动弹模态
 
-`_layouts/admin.html` 的 `<body>` 加 `data-auth-auto-open="true"`，`assets/js/auth-nav.js` 在 `refresh()` 检测到无 session 时检查该标志、调用 `openModal()`。
+`_layouts/base.html` 的 `<body>` 标签在 `page.layout == 'admin'` 时输出 `data-auth-auto-open="true"`。`assets/js/auth-nav.js` 在 `refresh()` 检测到无 session 时检查该标志、调用 `openModal()`。
 
-`_layouts/contribute.html` / `_layouts/lut.html` **不**加此信号，避免投稿页 / 详情页误弹模态。
+`_layouts/contribute.html` / `_layouts/lut.html` 不属于 admin 布局，body 不带此信号，避免投稿页 / 详情页误弹模态。
 
 #### Scenario: 未登录访问 /admin/submissions/ 自动弹模态
 - Given admin 访客未登录
