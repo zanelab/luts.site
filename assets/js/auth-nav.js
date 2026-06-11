@@ -114,12 +114,23 @@
     try {
       var sess = await client.auth.getSession();
       var session = sess && sess.data && sess.data.session;
-      if (!session) { setSignedOut(); return; }
+      if (!session) { setSignedOut(); autoOpenIfEligible(); return; }
       var role = await loadRole(session.user.id);
       setSignedIn(session.user, role);
     } catch (err) {
       console.warn('auth-nav refresh failed', err);
       setSignedOut();
+    }
+  }
+
+  // ===== Auto-open modal on admin pages when signed out ====================
+
+  function autoOpenIfEligible() {
+    try {
+      if (!document.body || document.body.dataset.authAutoOpen !== 'true') return;
+      openModal();
+    } catch (err) {
+      console.warn('auth-nav autoOpen failed', err);
     }
   }
 

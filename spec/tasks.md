@@ -23,3 +23,4 @@
 - [x] `/contribute/` 投稿页（drag-drop 上传）
 - [x] `/admin/submissions/` 审批队列
 - [x] Admin OTP 登录（顶导两步 OTP 模态，取代 magic link）
+- [x] Admin 顶导登录入口（「🔒 管理」文字链接，公开页可见，admin 页自动弹模态）
