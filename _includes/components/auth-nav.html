@@ -123,31 +123,63 @@
   .auth-nav-dropdown a:hover, .auth-nav-dropdown button:hover { background: #f3f3f3; }
 
   .auth-nav-modal {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    position: fixed; inset: 0; background: rgba(0,0,0,0.65);
     display: flex; align-items: center; justify-content: center;
     z-index: 2000;
   }
   .auth-nav-modal[hidden] { display: none; }
   .auth-nav-modal-card {
-    position: relative; background: #fff; color: #222;
+    position: relative; background: #1a1a1a; color: #eee;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     padding: 24px; border-radius: 6px; max-width: 380px; width: 92%;
   }
   .auth-nav-modal-close {
     position: absolute; top: 8px; right: 8px;
     background: none; border: 0; font-size: 24px; line-height: 1;
-    cursor: pointer; color: #888;
+    cursor: pointer; color: rgba(255,255,255,0.6);
+    width: 32px; height: 32px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s ease, color 0.2s ease;
   }
-  .auth-nav-modal-title { margin: 0 0 8px; font-size: 18px; }
-  .auth-nav-modal-help { margin: 0 0 16px; color: #666; font-size: 14px; }
+  .auth-nav-modal-close:hover {
+    background: rgba(255,255,255,0.08); color: #fff;
+  }
+  .auth-nav-modal-title {
+    margin: 0 0 8px; font-size: 16px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .auth-nav-modal-help {
+    margin: 0 0 16px; color: rgba(255,255,255,0.6); font-size: 13px;
+  }
   .auth-nav-step[hidden] { display: none; }
   .auth-nav-modal-card input[type="email"] {
-    width: 100%; padding: 10px 12px; margin-bottom: 12px;
-    border: 1px solid #ccc; border-radius: 4px; font-size: 14px;
-    box-sizing: border-box;
+    width: 100%; padding: 12px 14px; margin-bottom: 12px;
+    background: #0e0e0e; color: #fff;
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
+    font-size: 14px; box-sizing: border-box;
+    outline: none; transition: border-color 0.15s ease;
+  }
+  .auth-nav-modal-card input[type="email"]:focus {
+    border-color: rgba(255,255,255,0.4);
+  }
+  .auth-nav-modal-card .btn-primary {
+    width: 100%; padding: 13px 20px;
+    background: #ebb85e; color: #95680d;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    border: none; border-radius: 4px; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .auth-nav-modal-card .btn-primary:hover:not(:disabled) {
+    background: #2d2d2d; color: #ebb85e;
+  }
+  .auth-nav-modal-card .btn-primary:disabled {
+    opacity: 0.45; cursor: not-allowed;
   }
   .auth-nav-modal-msg { margin: 8px 0 0; font-size: 13px; min-height: 1.2em; }
-  .auth-nav-modal-msg.error { color: #c00; }
-  .auth-nav-modal-msg.ok { color: #080; }
+  .auth-nav-modal-msg.error { color: #ff8a8a; }
+  .auth-nav-modal-msg.ok { color: #8ed8a3; }
 
   .auth-nav-code-row {
     display: flex; gap: 8px; justify-content: center;
@@ -156,25 +188,28 @@
   .auth-nav-code-input {
     width: 40px; height: 48px;
     text-align: center; font-size: 22px; font-weight: 600;
-    border: 1px solid #ccc; border-radius: 4px;
-    background: #fafafa; box-sizing: border-box;
+    background: #0e0e0e; color: #fff;
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, background 0.15s ease;
   }
   .auth-nav-code-input:focus {
     outline: none; border-color: #ebb85e;
-    background: #fffdf6;
+    background: rgba(235,184,94,0.06);
   }
   .auth-nav-code-actions {
     display: flex; justify-content: space-between;
-    font-size: 13px; margin-top: 8px;
+    font-size: 12px; margin-top: 8px;
+    letter-spacing: 0.05em; text-transform: uppercase;
   }
   .auth-nav-link {
     background: none; border: 0; padding: 0;
-    color: #2d2d2d; cursor: pointer; font: inherit;
+    color: rgba(255,255,255,0.7); cursor: pointer; font: inherit;
     text-decoration: none;
   }
   .auth-nav-link:hover { color: #ebb85e; text-decoration: underline; }
   .auth-nav-link[disabled] {
-    color: #999; cursor: not-allowed; text-decoration: none;
+    color: rgba(255,255,255,0.3); cursor: not-allowed; text-decoration: none;
   }
 
   @media (max-width: 480px) {
