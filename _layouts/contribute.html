@@ -1,0 +1,21 @@
+---
+layout: base
+body_class: lut-contribute-page wp-singular page-template page-template-template-landing page-template-template-landing-php page page-id-263 wp-theme-sansara woocommerce-no-js header-type-left_side header-nav-type-visible_menu header-space-no header-container-container popup_download_yes project_details_yes wrap_lines_no mobile_no site-dark chrome osx wpb-js-composer js-comp-ver-6.6.0 vc_responsive
+---
+
+{% include head-scripts.html %}
+
+<div id="all" class="site">
+  {% include header.html %}
+
+  <main class="main-row">
+    <div class="container">
+      {{ content }}
+    </div>
+  </main>
+
+  {% include footer.html %}
+</div>
+
+<script src="{{ site.baseurl }}/assets/js/supabase-config.js" defer></script>
+<script src="{{ site.baseurl }}/assets/js/contribute.js" defer></script>

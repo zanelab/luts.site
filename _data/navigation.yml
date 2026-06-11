@@ -10,3 +10,7 @@
   url: /blog/
   target: _self
 
+- title: 投稿
+  url: /contribute/
+  target: _self
+

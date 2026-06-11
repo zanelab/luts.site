@@ -1,16 +1,23 @@
 # Supabase Backend
 
-LUT 下载流程的后端：一张 Postgres 表 + 一个 Edge Function + 一段 Storage 配置。
+LUT 站点的后端：下载流程 + 投稿贡献流程。两套独立的 Edge Function 各自单文件部署。
 
 ## 目录结构
 
 ```
 supabase/
 ├── functions/
-│   └── request-lut-download/
-│       └── index.ts         # 单文件：CORS + Turnstile + Resend + 限流 + 审计
-└── migrations/
-    └── 20260610000000_lut_download_init.sql   # 表结构 + RLS
+│   ├── request-lut-download/
+│   │   └── index.ts             # 下载流：CORS + Turnstile + Resend + 限流 + 审计
+│   ├── submit-lut/
+│   │   └── index.ts             # 投稿：JWT 验证 + multipart 上传 + 限流 + admin 邮件通知
+│   └── moderate-submission/
+│       └── index.ts             # 审批：admin-only JSON 接口，approve / reject
+├── migrations/
+│   ├── 20260610000000_lut_download_init.sql      # luts + lut_download_requests
+│   └── 20260611000000_lut_contribution.sql       # users + submissions + luts 扩展 + RLS + 触发器
+└── sql/
+    └── bootstrap-admin.sql       # 把某个登录用户提升为 admin
 ```
 
 ## 接口契约
@@ -200,3 +207,164 @@ curl -i -X POST http://127.0.0.1:54321/functions/v1/request-lut-download \
     and status = 'success'
     and created_at > now() - interval '24 hours';
   ```
+
+---
+
+# 投稿贡献流程
+
+任何访客（**无需登录**）可在 `/contribute/` 提交 `.cube` LUT；admin 通过 magic link 登录后在 `/admin/submissions/` 审批；通过后文件从 `lut-submissions` 复制到 `luts` 公开桶，并自动写入 `public.luts` 表。
+
+## 数据模型
+
+迁移 `20260611000000_lut_contribution.sql` 增加：
+
+| 表 | 用途 |
+|----|------|
+| `public.users` | 与 `auth.users` 1:1 镜像（`role` 字段 `user` / `admin`） |
+| `public.submissions` | 投稿记录（pending / approved / rejected 三态）；`user_id` 可空（匿名投稿） |
+| `public.luts` | 扩展字段：`description` / `tags` / `source_submission_id` / `published_by` / `updated_at` |
+
+外加：
+
+- `auth.users` 插入触发器自动写入 `public.users`
+- `public.luts` 的 `luts_select_public` RLS policy：anon / authenticated 可读
+- `public.submissions` RLS：**仅 admin** 可读；其他角色都拒；所有写仅 service_role
+- `touch_updated_at` 触发器
+
+匿名投稿调整（迁移 `20260612000000_lut_contribution_anonymous.sql`）：
+
+- `submissions.user_id` 改为可空（匿名投稿 `user_id = NULL`）
+- 移除 `submissions_select_self` policy（不再需要：投稿人不感知有 `/contribute/mine/`）
+
+## 一次性准备
+
+### 1. 创建 Storage Bucket
+
+Dashboard → Storage → New bucket：
+
+- **Name**：`lut-submissions`
+- **Public**：**否**（私有桶，仅 service_role Edge Function 可读写）
+- 文件落地路径：`submissions/{user_id_or_anonymous}/{submission_id}.cube`（匿名投稿用 `submissions/anonymous/` 段）
+- 不需要额外 RLS policy：Edge Function 用 service_role 绕过
+
+公开桶 `luts` 沿用下载流配置（`supabase storage` 共享）。
+
+### 2. 跑数据库迁移
+
+```bash
+supabase db push
+```
+
+迁移会创建 `public.users` / `public.submissions`、扩展 `public.luts` 字段、加 RLS policy、装触发器、把 `submissions.user_id` 改为可空。所有 SQL 都 `IF NOT EXISTS` / `drop if exists`，可重复跑。
+
+### 3. 提升第一个 admin
+
+参见 `supabase/sql/bootstrap-admin.sql`。流程：
+
+1. admin 用 magic link 登录一次（顶导「登录」按钮触发；登录后头像在右上角）
+2. Dashboard → Authentication → Users 拿到 `User UID`
+3. 跑：
+   ```sql
+   update public.users set role = 'admin' where id = '<uid>';
+   ```
+4. 退出再重新登录（或刷新），头像下拉里出现「⚙ 审批」
+
+### 4. 部署 Edge Function
+
+```bash
+supabase functions deploy submit-lut
+supabase functions deploy moderate-submission
+```
+
+`TURNSTILE_SECRET_KEY` / `RESEND_API_KEY` / `EMAIL_FROM` / `SITE_ORIGIN` 沿用下载流已有的 secrets（同一项目）。
+
+## 接口契约
+
+### `submit-lut`（匿名投稿，JWT 可选）
+
+```
+POST  /functions/v1/submit-lut
+Headers:
+  Authorization: Bearer <admin JWT>      (可选；仅 direct_publish=true 时强制)
+  Content-Type: multipart/form-data
+
+Body:
+  file:            .cube file (binary, <= 10MB)
+  email:           string (必填；用于限流 + 拒绝通知)
+  title:           string 1-80
+  description:     string 1-500
+  tags:            string, 逗号分隔，<= 5 个，每项 <= 16 字
+  turnstileToken:  string
+  direct_publish:  "true" | "false"（仅 admin 设为 "true" 时跳过队列）
+```
+
+| 状态码 | Body                              | 触发 |
+|--------|-----------------------------------|------|
+| 200    | `{ ok, submissionId, status, lutId?, slug? }` | 成功 |
+| 400    | `{ error: "invalid_input" }`     | 字段 / 文件 / 扩展名 / 邮箱 不合法 |
+| 400    | `{ error: "invalid_token" }`     | Turnstile 失败 |
+| 403    | `{ error: "forbidden" }`         | `direct_publish=true` 但非 admin |
+| 429    | `{ error: "rate_limited" }`      | 该邮箱 24h 内 ≥ 5 次成功 |
+| 500    | `{ error: "upload_failed" \| "internal" }` | 存储 / DB 异常 |
+
+匿名行为：缺 `Authorization` 头或 JWT 无效都视为匿名（不返回 401），按表单 `email` 限流 + 通知。
+
+### `moderate-submission`（admin 审批）
+
+```
+POST  /functions/v1/moderate-submission
+Headers:
+  Authorization: Bearer <admin JWT>
+  Content-Type: application/json
+
+Body:
+  { "submissionId": "<uuid>", "action": "approve" }
+  { "submissionId": "<uuid>", "action": "reject", "reason": ">=10 chars" }
+```
+
+| 状态码 | Body                              | 触发 |
+|--------|-----------------------------------|------|
+| 200    | `{ ok, status: "approved", lutId, slug }` | 通过 |
+| 200    | `{ ok, status: "rejected" }`       | 拒绝 |
+| 400    | `{ error: "invalid_input" }`     | reason 过短 / JSON 缺字段 |
+| 401    | `{ error: "unauthenticated" }`   | 缺 / 无效 JWT |
+| 403    | `{ error: "forbidden" }`         | 非 admin |
+| 404    | `{ error: "not_found" }`         | submissionId 不存在 |
+| 409    | `{ error: "already_reviewed" }`  | status != pending |
+
+## 工作流
+
+### 访客（匿名）
+
+1. 访问 `/contribute/`
+2. 填表：邮箱（必填）+ .cube（≤ 10MB）+ 标题（1-80）+ 描述（1-500）+ ≤ 5 tags
+3. 提交 → 文件存 `lut-submissions/submissions/anonymous/{submission_id}.cube` + `submissions` 表插入 `user_id=NULL, user_email=<表单填的>，status=pending` + 所有 admin 收到通知邮件
+4. 看到「已投稿」+ submissionId（如果被拒，邮箱会收到通知）
+
+### admin
+
+1. 顶导「登录」→ 邮箱 magic link → 头像出现，必要时提升 role（见上面「提升第一个 admin」）
+2. 进 `/contribute/` 表单，多出「直接发布」开关
+3. 勾上 + 提交 = 走 publishApprovedLut 完整链路，submissions 直接置 approved
+4. 进 `/admin/submissions/`，三个 tab：pending（默认）/ approved / rejected
+5. 点详情抽屉：「下载预览 .cube」(signed URL, 1h) /「Approve & Publish」/「Reject + 原因（≥10 字）」
+6. 通过后：luts 表新增行 + luts/{slug}.cube 存在公开桶。**admin 还需要手动把 luts.id 复制到 `_luts/{slug}.md` 的 `lutId:` 字段，下次 Jekyll build 后前台才能展示**
+
+## 运维
+
+```sql
+-- 看投稿队列
+select id, user_email, title, status, created_at
+from public.submissions
+order by created_at desc
+limit 50;
+
+-- 找漏掉的 admin 通知
+select user_email, title, created_at
+from public.submissions
+where status = 'pending'
+  and created_at > now() - interval '24 hours'
+order by created_at;
+```
+
+Edge Function 日志：`supabase functions logs submit-lut` / `supabase functions logs moderate-submission`。

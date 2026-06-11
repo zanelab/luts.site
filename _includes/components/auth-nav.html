@@ -1,0 +1,254 @@
+<!--
+  Auth-aware nav slot.
+
+  Renders into the .fr area next to the existing nav. The page must include
+  assets/js/supabase-config.js (window.LUTSITE_*) BEFORE this partial's
+  inline script runs. The script wires up:
+
+    - Sign in:  email prompt -> supabase.auth.signInWithOtp({ emailRedirectTo })
+    - User menu: avatar initial + dropdown with "退出"
+    - Admin menu: extra "⚙ 审批" entry when users.role === 'admin'
+
+  Only used for admin sign-in (the regular /contribute/ flow is anonymous).
+  The magic link redirects back to the current page.
+-->
+<div class="auth-nav" id="auth-nav">
+  <div class="auth-nav-loading" hidden>...</div>
+
+  <button type="button" class="auth-nav-signin btn btn-default" id="auth-nav-signin">
+    登录
+  </button>
+
+  <div class="auth-nav-user" hidden>
+    <button type="button" class="auth-nav-avatar" id="auth-nav-avatar" aria-haspopup="true" aria-expanded="false">
+      <span class="auth-nav-initial">?</span>
+    </button>
+    <ul class="auth-nav-dropdown" id="auth-nav-dropdown" role="menu" hidden>
+      <li class="auth-nav-admin" role="none" hidden>
+        <a role="menuitem" href="/admin/submissions/">⚙ 审批</a>
+      </li>
+      <li role="none">
+        <button type="button" role="menuitem" id="auth-nav-signout">退出</button>
+      </li>
+    </ul>
+  </div>
+
+  <div class="auth-nav-modal" id="auth-nav-modal" hidden>
+    <div class="auth-nav-modal-card">
+      <button type="button" class="auth-nav-modal-close" id="auth-nav-modal-close" aria-label="关闭">×</button>
+      <h3 class="auth-nav-modal-title">登录 / 注册</h3>
+      <p class="auth-nav-modal-help">输入邮箱，我们会发一封 magic link 给你，点击链接即可登录。</p>
+      <form id="auth-nav-form">
+        <input type="email" id="auth-nav-email" placeholder="your@email.com" required autocomplete="email" />
+        <button type="submit" class="btn btn-primary" id="auth-nav-submit">发送登录链接</button>
+      </form>
+      <p class="auth-nav-modal-msg" id="auth-nav-modal-msg" aria-live="polite"></p>
+    </div>
+  </div>
+</div>
+
+<style>
+  .auth-nav { position: relative; display: inline-block; vertical-align: middle; }
+  .auth-nav-signin.btn { margin-left: 12px; }
+  .auth-nav-user { position: relative; display: inline-block; margin-left: 12px; }
+  .auth-nav-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #111; color: #fff; border: 0; cursor: pointer;
+    font-size: 14px; font-weight: 600; line-height: 36px;
+    text-align: center; padding: 0;
+  }
+  .auth-nav-avatar:hover { background: #333; }
+  .auth-nav-initial { display: block; }
+  .auth-nav-dropdown {
+    position: absolute; right: 0; top: calc(100% + 8px);
+    min-width: 180px; background: #fff; color: #222;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    list-style: none; padding: 6px 0; margin: 0;
+    border-radius: 4px; z-index: 1000;
+  }
+  .auth-nav-dropdown[hidden] { display: none; }
+  .auth-nav-dropdown li { display: block; }
+  .auth-nav-dropdown a, .auth-nav-dropdown button {
+    display: block; width: 100%; padding: 8px 16px;
+    text-align: left; background: none; border: 0;
+    color: inherit; text-decoration: none; font: inherit;
+    cursor: pointer;
+  }
+  .auth-nav-dropdown a:hover, .auth-nav-dropdown button:hover { background: #f3f3f3; }
+
+  .auth-nav-modal {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 2000;
+  }
+  .auth-nav-modal[hidden] { display: none; }
+  .auth-nav-modal-card {
+    position: relative; background: #fff; color: #222;
+    padding: 24px; border-radius: 6px; max-width: 360px; width: 90%;
+  }
+  .auth-nav-modal-close {
+    position: absolute; top: 8px; right: 8px;
+    background: none; border: 0; font-size: 24px; line-height: 1;
+    cursor: pointer; color: #888;
+  }
+  .auth-nav-modal-title { margin: 0 0 8px; font-size: 18px; }
+  .auth-nav-modal-help { margin: 0 0 16px; color: #666; font-size: 14px; }
+  .auth-nav-modal-card input[type="email"] {
+    width: 100%; padding: 10px 12px; margin-bottom: 12px;
+    border: 1px solid #ccc; border-radius: 4px; font-size: 14px;
+    box-sizing: border-box;
+  }
+  .auth-nav-modal-msg { margin: 8px 0 0; font-size: 13px; min-height: 1.2em; }
+  .auth-nav-modal-msg.error { color: #c00; }
+  .auth-nav-modal-msg.ok { color: #080; }
+</style>
+
+<script>
+(function () {
+  'use strict';
+
+  var supabaseUrl = window.LUTSITE_SUPABASE_URL;
+  var anonKey = window.LUTSITE_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !anonKey || supabaseUrl === 'TODO' || anonKey === 'TODO') {
+    // Supabase not configured; hide the whole widget to avoid broken UX.
+    var el = document.getElementById('auth-nav');
+    if (el) el.style.display = 'none';
+    return;
+  }
+  if (!window.supabase || !window.supabase.createClient) {
+    // supabase-js not loaded; bail.
+    return;
+  }
+
+  var client = window.supabase.createClient(supabaseUrl, anonKey, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  });
+
+  var signinBtn = document.getElementById('auth-nav-signin');
+  var userBox = document.querySelector('.auth-nav-user');
+  var avatarBtn = document.getElementById('auth-nav-avatar');
+  var initialEl = document.querySelector('.auth-nav-initial');
+  var dropdown = document.getElementById('auth-nav-dropdown');
+  var adminItem = document.querySelector('.auth-nav-admin');
+  var signoutBtn = document.getElementById('auth-nav-signout');
+  var modal = document.getElementById('auth-nav-modal');
+  var modalClose = document.getElementById('auth-nav-modal-close');
+  var modalForm = document.getElementById('auth-nav-form');
+  var modalEmail = document.getElementById('auth-nav-email');
+  var modalSubmit = document.getElementById('auth-nav-submit');
+  var modalMsg = document.getElementById('auth-nav-modal-msg');
+
+  function openModal() {
+    if (!modal) return;
+    modalMsg.textContent = '';
+    modalMsg.className = 'auth-nav-modal-msg';
+    modalEmail.value = '';
+    modal.hidden = false;
+    setTimeout(function () { modalEmail.focus(); }, 50);
+  }
+  function closeModal() { if (modal) modal.hidden = true; }
+
+  function setSignedOut() {
+    signinBtn.hidden = false;
+    userBox.hidden = true;
+  }
+  function setSignedIn(user, role) {
+    signinBtn.hidden = true;
+    userBox.hidden = false;
+    var email = (user && user.email) || '';
+    initialEl.textContent = email ? email[0].toUpperCase() : '?';
+    if (adminItem) adminItem.hidden = role !== 'admin';
+  }
+
+  async function loadRole(userId) {
+    if (!userId) return 'user';
+    try {
+      var r = await client.from('users').select('role').eq('id', userId).maybeSingle();
+      if (r.error || !r.data) return 'user';
+      return r.data.role || 'user';
+    } catch (_e) {
+      return 'user';
+    }
+  }
+
+  async function refresh() {
+    try {
+      var sess = await client.auth.getSession();
+      var session = sess && sess.data && sess.data.session;
+      if (!session) { setSignedOut(); return; }
+      var role = await loadRole(session.user.id);
+      setSignedIn(session.user, role);
+    } catch (err) {
+      console.warn('auth-nav refresh failed', err);
+      setSignedOut();
+    }
+  }
+
+  if (signinBtn) signinBtn.addEventListener('click', openModal);
+  if (modalClose) modalClose.addEventListener('click', closeModal);
+  if (modal) {
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) closeModal();
+    });
+  }
+  if (modalForm) {
+    modalForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var email = modalEmail.value.trim();
+      if (!email) return;
+      modalSubmit.disabled = true;
+      modalMsg.textContent = '发送中…';
+      modalMsg.className = 'auth-nav-modal-msg';
+      try {
+        var redirectTo = window.location.origin + window.location.pathname;
+        var r = await client.auth.signInWithOtp({
+          email: email,
+          options: { emailRedirectTo: redirectTo }
+        });
+        if (r.error) {
+          modalMsg.textContent = '发送失败：' + r.error.message;
+          modalMsg.className = 'auth-nav-modal-msg error';
+        } else {
+          modalMsg.textContent = '已发送，请查收邮箱。';
+          modalMsg.className = 'auth-nav-modal-msg ok';
+        }
+      } catch (err) {
+        modalMsg.textContent = '网络异常：' + (err && err.message || err);
+        modalMsg.className = 'auth-nav-modal-msg error';
+      } finally {
+        modalSubmit.disabled = false;
+      }
+    });
+  }
+
+  if (avatarBtn && dropdown) {
+    avatarBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = !dropdown.hidden;
+      dropdown.hidden = open;
+      avatarBtn.setAttribute('aria-expanded', open ? 'false' : 'true');
+    });
+    document.addEventListener('click', function (e) {
+      if (!userBox.contains(e.target)) {
+        dropdown.hidden = true;
+        avatarBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
+  if (signoutBtn) {
+    signoutBtn.addEventListener('click', async function () {
+      try { await client.auth.signOut(); } catch (_e) {}
+      dropdown.hidden = true;
+      setSignedOut();
+    });
+  }
+
+  client.auth.onAuthStateChange(function (_event, _session) {
+    refresh();
+  });
+
+  refresh();
+})();
+</script>

@@ -16,7 +16,7 @@ ROOT_DIR=$(cd "$(dirname "$0")/.." && pwd)
 ENV_FILE="$ROOT_DIR/.env"
 OUT_FILE="$ROOT_DIR/assets/js/supabase-config.js"
 
-VARS="SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_EDGE_FUNCTION TURNSTILE_SITE_KEY"
+VARS="SUPABASE_URL SUPABASE_ANON_KEY TURNSTILE_SITE_KEY"
 
 get_value() {
   var_name=$1
@@ -63,7 +63,6 @@ mkdir -p "$(dirname "$OUT_FILE")"
     case "$var" in
       SUPABASE_URL)             key=LUTSITE_SUPABASE_URL ;;
       SUPABASE_ANON_KEY)        key=LUTSITE_SUPABASE_ANON_KEY ;;
-      SUPABASE_EDGE_FUNCTION)   key=LUTSITE_SUPABASE_EDGE_FUNCTION ;;
       TURNSTILE_SITE_KEY)       key=LUTSITE_TURNSTILE_SITE_KEY ;;
     esac
     echo "window.$key = '$esc';"

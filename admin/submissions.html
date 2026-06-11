@@ -1,0 +1,113 @@
+---
+layout: admin
+title: 投稿审批
+permalink: /admin/submissions/
+description: 管理员审批队列
+---
+
+<h1 class="h2 page-title">投稿审批</h1>
+
+<div class="lut-admin" id="lut-admin">
+  <p class="lut-admin-loading" id="lut-admin-loading">加载中…</p>
+
+  <div class="lut-admin-denied" id="lut-admin-denied" hidden>
+    <p>此页面仅对管理员开放。</p>
+  </div>
+
+  <div class="lut-admin-error" id="lut-admin-error" hidden>
+    <p class="lut-admin-error-msg" id="lut-admin-error-msg"></p>
+    <button type="button" class="btn btn-default" id="lut-admin-retry">重试</button>
+  </div>
+
+  <div class="lut-admin-content" id="lut-admin-content" hidden>
+    <div class="lut-admin-tabs" role="tablist">
+      <button type="button" class="lut-admin-tab" data-status="pending" role="tab">待审核</button>
+      <button type="button" class="lut-admin-tab" data-status="approved" role="tab">已通过</button>
+      <button type="button" class="lut-admin-tab" data-status="rejected" role="tab">已拒绝</button>
+    </div>
+
+    <ul class="lut-admin-list" id="lut-admin-list"></ul>
+    <p class="lut-admin-empty" id="lut-admin-empty" hidden>暂无</p>
+  </div>
+
+  <div class="lut-admin-drawer" id="lut-admin-drawer" hidden aria-hidden="true">
+    <div class="lut-admin-drawer-card">
+      <button type="button" class="lut-admin-drawer-close" id="lut-admin-drawer-close" aria-label="关闭">×</button>
+      <h3 class="lut-admin-drawer-title" id="lut-admin-drawer-title"></h3>
+      <p class="lut-admin-drawer-meta" id="lut-admin-drawer-meta"></p>
+      <p class="lut-admin-drawer-desc" id="lut-admin-drawer-desc"></p>
+      <p class="lut-admin-drawer-tags" id="lut-admin-drawer-tags"></p>
+      <p class="lut-admin-drawer-file" id="lut-admin-drawer-file"></p>
+      <p class="lut-admin-drawer-link" id="lut-admin-drawer-link"></p>
+
+      <div class="lut-admin-drawer-actions" id="lut-admin-drawer-actions">
+        <button type="button" class="btn btn-primary" id="lut-admin-approve">Approve &amp; Publish</button>
+      </div>
+
+      <div class="lut-admin-reject" id="lut-admin-reject">
+        <label for="lut-admin-reject-reason">拒绝原因（至少 10 字）</label>
+        <textarea id="lut-admin-reject-reason" rows="3" maxlength="500"></textarea>
+        <p class="lut-admin-counter"><span id="lut-admin-reject-count">0</span> / 500</p>
+        <button type="button" class="btn btn-danger" id="lut-admin-reject-btn" disabled>确认拒绝</button>
+      </div>
+
+      <p class="lut-admin-drawer-status" id="lut-admin-drawer-status" aria-live="polite"></p>
+    </div>
+  </div>
+</div>
+
+<style>
+  .lut-admin-loading, .lut-admin-denied, .lut-admin-error { padding: 16px 0; }
+  .lut-admin-tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid #eee; }
+  .lut-admin-tab {
+    background: none; border: 0; padding: 10px 16px; cursor: pointer;
+    font: inherit; color: #888; border-bottom: 2px solid transparent;
+  }
+  .lut-admin-tab.active { color: #111; border-bottom-color: #111; font-weight: 600; }
+
+  .lut-admin-list { list-style: none; padding: 0; margin: 0; }
+  .lut-admin-list li {
+    padding: 12px 16px; border: 1px solid #eee; border-radius: 4px;
+    margin-bottom: 8px; display: grid;
+    grid-template-columns: 1fr auto auto auto; gap: 8px 16px; align-items: center;
+  }
+  .lut-admin-list .title { font-weight: 600; }
+  .lut-admin-list .meta { font-size: 12px; color: #888; }
+  .lut-admin-list .status {
+    font-size: 11px; padding: 2px 8px; border-radius: 3px; font-weight: 600;
+  }
+  .lut-admin-list .status.pending { background: #fff3cd; color: #856404; }
+  .lut-admin-list .status.approved { background: #d4edda; color: #155724; }
+  .lut-admin-list .status.rejected { background: #f8d7da; color: #721c24; }
+  .lut-admin-list .detail-btn { background: #f3f3f3; border: 0; padding: 6px 12px; cursor: pointer; border-radius: 3px; }
+
+  .lut-admin-drawer {
+    position: fixed; top: 0; right: 0; bottom: 0; width: 480px; max-width: 100vw;
+    background: rgba(0,0,0,0.4); z-index: 1500;
+    display: flex; justify-content: flex-end;
+  }
+  .lut-admin-drawer[hidden] { display: none; }
+  .lut-admin-drawer-card {
+    background: #fff; color: #222; width: 100%; padding: 24px;
+    overflow-y: auto; position: relative; box-sizing: border-box;
+  }
+  .lut-admin-drawer-close {
+    position: absolute; top: 8px; right: 12px; background: none; border: 0;
+    font-size: 28px; line-height: 1; cursor: pointer; color: #888;
+  }
+  .lut-admin-drawer-title { margin: 0 0 4px; font-size: 20px; }
+  .lut-admin-drawer-meta { color: #888; font-size: 12px; margin: 0 0 12px; }
+  .lut-admin-drawer-desc { margin: 0 0 12px; line-height: 1.5; }
+  .lut-admin-drawer-tags, .lut-admin-drawer-file, .lut-admin-drawer-link { font-size: 13px; color: #555; margin: 0 0 8px; }
+  .lut-admin-drawer-actions { display: flex; gap: 8px; margin: 16px 0; }
+  .lut-admin-reject { border-top: 1px solid #eee; padding-top: 16px; margin-top: 16px; }
+  .lut-admin-reject label { display: block; font-weight: 600; margin-bottom: 6px; }
+  .lut-admin-reject textarea {
+    width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;
+    box-sizing: border-box; font: inherit;
+  }
+  .lut-admin-counter { font-size: 12px; color: #888; text-align: right; margin: 4px 0 8px; }
+  .lut-admin-drawer-status { margin-top: 12px; font-size: 14px; min-height: 1.2em; }
+  .lut-admin-drawer-status.error { color: #c00; }
+  .lut-admin-drawer-status.ok { color: #080; }
+</style>

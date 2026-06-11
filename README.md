@@ -42,8 +42,9 @@ make clean
 |------|---------|------|------|
 | `SUPABASE_URL` | 是 | `https://abcd1234.supabase.co` | Supabase 项目 URL（公开值） |
 | `SUPABASE_ANON_KEY` | 是 | `eyJhbGciOi...` | 前端使用的 anon key（**严禁填 service_role**） |
-| `SUPABASE_EDGE_FUNCTION` | 是 | `request-lut-download` | 已部署的 Edge Function 名称 |
 | `TURNSTILE_SITE_KEY` | 是 | `0x4AAAA...` | Cloudflare Turnstile 站点公钥，必须 `0x` 开头 |
+
+> Edge Function 名称（`request-lut-download` / `submit-lut` / `moderate-submission`）在 JS 里硬编码为文件顶部常量（`assets/js/lut-download.js` / `contribute.js` / `admin-submissions.js`），不通过环境变量配置——它们跟源码绑定，部署时不会变。
 
 ### 这些值从哪里取
 
@@ -53,23 +54,24 @@ make clean
 
 ### 注入机制
 
-`make build` / `make serve` 会先跑 `script/build-config.sh`，把 `.env` 里的四个变量转换为：
+`make build` / `make serve` 会先跑 `script/build-config.sh`，把 `.env` 里的变量转换为：
 
 ```js
 // assets/js/supabase-config.js（自动生成，已被 git 忽略，不要手改）
 window.LUTSITE_SUPABASE_URL = '...';
 window.LUTSITE_SUPABASE_ANON_KEY = '...';
-window.LUTSITE_SUPABASE_EDGE_FUNCTION = '...';
 window.LUTSITE_TURNSTILE_SITE_KEY = '...';
 ```
 
-LUT 详情页通过这四个 `window.*` 全局调用 Supabase Edge Function 和渲染 Turnstile。
+LUT 详情页通过这三个 `window.*` 全局调用 Supabase Edge Function 和渲染 Turnstile。
 
 ### 无 `.env` 时的降级
 
 如果根目录没有 `.env`，`script/build-config.sh` 会把每个变量写成 `'TODO'`。站点仍可构建并访问：
 - 进入 LUT 详情页 → 点击「下载 LUT」按钮 → 模态弹出时顶部显示「人机验证未配置」，提交按钮始终 disabled。
 - 列表页、博客、对比滑块等功能不受影响。
+- `/contribute/` 投稿页会显示 banner「人机验证未配置」，提交按钮 disabled。
+- `/admin/submissions/` 仅 admin 可见，但调用 Edge Function 会被前端拦截（`SUPABASE_URL` / `SUPABASE_ANON_KEY` 缺失时页面显示配置错误）。
 
 ## 项目结构
 
@@ -79,10 +81,18 @@ luts.site/
 ├── _layouts/                # 页面布局
 │   ├── base.html            # 全局 <html>/<head>/<body> 骨架
 │   ├── lut.html             # LUT 详情页（带 sticky 侧栏 + 下载弹窗）
-│   └── post.html            # 博客详情页
+│   ├── post.html            # 博客详情页
+│   ├── contribute.html      # /contribute/ 匿名投稿页
+│   └── admin.html           # /admin/submissions/ 审批页
 ├── _includes/
+│   ├── components/
+│   │   └── auth-nav.html    # 顶导的登录 / 头像下拉（auth-aware）
 │   ├── header.html
 │   └── head-scripts.html    # Supabase + Turnstile CDN 引入
+├── contribute/              # 匿名投稿页（layout: contribute）
+│   └── index.html           # /contribute/
+├── admin/                   # 管理员页
+│   └── submissions.html     # /admin/submissions/
 ├── _luts/                   # LUT collection（前缀以 _ 表示 Jekyll collection 源目录）
 │   └── *.md                 # 每个 LUT 一个 markdown，front matter 详见下文
 ├── _posts/                  # 博客文章
@@ -149,7 +159,7 @@ excerpt: "摘要"
 前端通过 `@supabase/supabase-js` 调用：
 
 ```
-POST {SUPABASE_URL}/functions/v1/{SUPABASE_EDGE_FUNCTION}
+POST {SUPABASE_URL}/functions/v1/request-lut-download
 Authorization: Bearer {SUPABASE_ANON_KEY}
 Content-Type: application/json
 
@@ -175,6 +185,35 @@ Content-Type: application/json
 
 网络异常（fetch 抛出）会兜底为「网络异常，请检查连接」。
 
+## 投稿流程（贡献 LUT）
+
+任何访客（**无需登录**）可在 `/contribute/` 投稿 `.cube` LUT；admin 通过 magic link 登录后在审批队列中处理；通过后文件自动复制到公开桶并写入 `public.luts` 表。
+
+### 用户故事（访客）
+
+1. 访问 `/contribute/`，填邮箱（必填，限流 + 拒绝通知用）+ .cube（≤ 10MB）+ 标题（1-80）+ 描述（1-500）+ ≤ 5 tags
+2. 提交 → 文件存 `lut-submissions/submissions/anonymous/{submission_id}.cube` + `submissions` 表 status=pending + 所有 admin 收到邮件
+3. 看到「已投稿，状态 pending」+ submissionId。如果被拒，邮箱会收到通知
+
+### 用户故事（admin）
+
+1. 顶导「登录」→ 邮箱 magic link → 头像出现在右上角
+2. 进 `/contribute/`，多出「直接发布」开关；勾上后提交 = 跳过队列
+3. 进 `/admin/submissions/`，三个 tab：pending（默认）/ approved / rejected
+4. 点详情抽屉：「下载预览 .cube」(signed URL, 1h) /「Approve & Publish」/「Reject + 原因（≥10 字）」
+5. 通过后：luts 表新增行 + 公开桶出现 `{slug}.cube` + admin 需手动把 luts.id 复制到 `_luts/{slug}.md` 的 `lutId:`，push → Jekyll build → 前台 `/lut/{slug}.html` 可下载
+
+### 管理员一次性设置
+
+1. 跑数据库迁移：`supabase db push`（创建 users / submissions 表 + luts 扩展 + RLS + 触发器 + 允许 user_id 为空）
+2. Dashboard → Storage → New bucket：`lut-submissions`（私有）
+3. 部署函数：`supabase functions deploy submit-lut && supabase functions deploy moderate-submission`
+4. admin 用 magic link 登录后，参见 `supabase/sql/bootstrap-admin.sql` 把 role 提升为 `admin`
+
+### 详细 API 与运维
+
+见 `supabase/README.md` 的「投稿贡献流程」一节（接口契约、错误码、运维 SQL）。
+
 ## 部署到 GitHub Pages
 
 仓库已配置 GitHub Actions（`.github/workflows/jekyll-gh-pages.yml`）：每次 push 到 `main` 时自动 `bundle install` → `make build`（先跑 `script/build-config.sh` 生成 `supabase-config.js`，再 `bundle exec jekyll build`）→ 部署到 GitHub Pages。
@@ -187,7 +226,6 @@ Content-Type: application/json
 |-----------|-----------------|------|
 | `SUPABASE_URL` | `SUPABASE_URL` | 必填 |
 | `SUPABASE_ANON_KEY` | `SUPABASE_ANON_KEY` | 必填，**仍是 anon key**，不要填 service_role |
-| `SUPABASE_EDGE_FUNCTION` | `SUPABASE_EDGE_FUNCTION` | 必填，通常是 `request-lut-download` |
 | `TURNSTILE_SITE_KEY` | `TURNSTILE_SITE_KEY` | 必填，`0x` 开头 |
 
 > **为什么放在 Environment 而不是 Repository level？**

@@ -2,7 +2,7 @@
 layout: lut
 title: 强化暗影
 date: 2026-06-10
-lutId: TBD-boost-shadow
+lutId: 12fdafds443q
 excerpt: "提升阴影区域的亮度或细节，同时保持中间调和高光相对自然。通过调整 RGB 曲线，使阴影区域的像素值被映射到更亮的位置，从而增强暗部细节。"
 beforeImg: /assets/images/luts/boost_shadow/before.jpg
 afterImg: /assets/images/luts/boost_shadow/after.jpg
