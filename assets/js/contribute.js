@@ -1,9 +1,9 @@
 /*
- * Contribute page
+ * Contribute page (anonymous).
  *
- * Posts a new LUT submission to the submit-lut Edge Function. Auth is
- * required; if no session, the page shows a "sign in" CTA that opens the
- * shared auth modal. Cloudflare Turnstile guards the form.
+ * Posts a new LUT submission to the submit-lut Edge Function. No login
+ * required. If an admin is signed in, an extra "直接发布" toggle is
+ * shown and the JWT is attached to the request.
  */
 (function () {
   'use strict';
@@ -24,7 +24,6 @@
   var MAX_TAG_LEN = 16;
 
   var ERROR_MESSAGES = {
-    unauthenticated: '请先登录后再投稿',
     forbidden: '权限不足',
     invalid_input: '表单字段不合法，请检查后重试',
     invalid_token: '人机验证失败，请重试',
@@ -38,7 +37,6 @@
   var els = {};
   var state = {
     client: null,
-    session: null,
     isAdmin: false,
     turnstileToken: '',
     submitting: false
@@ -80,25 +78,6 @@
     el.hidden = !msg;
   }
 
-  function setSignedIn(session) {
-    state.session = session;
-    if (els.signedout) els.signedout.hidden = true;
-    if (els.signedin) els.signedin.hidden = false;
-    var user = session && session.user;
-    if (els.email) els.email.textContent = user && user.email || '';
-    if (user && els.directWrap) {
-      els.directWrap.hidden = !state.isAdmin;
-    }
-    if (isTurnstileConfigured()) renderTurnstile();
-    else { showBanner('人机验证未配置：投稿功能暂不可用'); disableForm(); }
-    validateForm();
-  }
-  function setSignedOut() {
-    state.session = null;
-    if (els.signedout) els.signedout.hidden = false;
-    if (els.signedin) els.signedin.hidden = true;
-  }
-
   function disableForm() {
     if (els.submit) els.submit.disabled = true;
   }
@@ -126,30 +105,30 @@
     });
   }
 
-  function readFieldError(id) { var el = $(id); return el && !el.hidden ? el.textContent : null; }
+  function readFieldError(id) {
+    var el = $(id);
+    return el && !el.hidden ? el.textContent : null;
+  }
 
   function validateForm() {
     if (!els.submit) return;
     if (state.submitting) { els.submit.disabled = true; return; }
-    if (!state.session) { els.submit.disabled = true; return; }
-    if (isTurnstileConfigured() && !state.turnstileToken) {
-      els.submit.disabled = true;
-      return;
-    }
     var fileOk = els.file && els.file.files && els.file.files[0] &&
       els.file.files[0].size > 0 && els.file.files[0].size <= MAX_FILE_SIZE;
+    var emailOk = els.email && EMAIL_PATTERN.test((els.email.value || '').trim());
     var titleOk = els.title && els.title.value.trim().length >= 1 &&
       els.title.value.trim().length <= MAX_TITLE_LEN;
     var descOk = els.description && els.description.value.trim().length >= 1 &&
       els.description.value.trim().length <= MAX_DESCRIPTION_LEN;
     var tagsOk = readFieldError('lut-contribute-tags-err') == null;
     var turnstileOk = !isTurnstileConfigured() || !!state.turnstileToken;
-    els.submit.disabled = !(fileOk && titleOk && descOk && tagsOk && turnstileOk);
+    els.submit.disabled = !(fileOk && emailOk && titleOk && descOk && tagsOk && turnstileOk);
   }
 
   function parseTagsClient(raw) {
     if (!raw) return { ok: true, value: [] };
-    var parts = raw.split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
+    var parts = raw.split(',').map(function (s) { return s.trim(); })
+      .filter(function (s) { return s.length > 0; });
     if (parts.length > MAX_TAGS) return { ok: false, reason: '标签最多 5 个' };
     for (var i = 0; i < parts.length; i++) {
       if (parts[i].length > MAX_TAG_LEN) return { ok: false, reason: '单个标签 ≤ 16 字' };
@@ -171,17 +150,21 @@
     } catch (_e) { return false; }
   }
 
-  async function refresh() {
+  async function refreshAdmin() {
     if (!state.client) return;
     try {
       var sess = await state.client.auth.getSession();
       var session = sess && sess.data && sess.data.session;
-      if (!session) { setSignedOut(); return; }
+      if (!session) {
+        state.isAdmin = false;
+        if (els.directWrap) els.directWrap.hidden = true;
+        return;
+      }
       state.isAdmin = await loadRole(session.user.id);
-      setSignedIn(session);
-    } catch (err) {
-      console.warn('refresh failed', err);
-      setSignedOut();
+      if (els.directWrap) els.directWrap.hidden = !state.isAdmin;
+    } catch (_e) {
+      state.isAdmin = false;
+      if (els.directWrap) els.directWrap.hidden = true;
     }
   }
 
@@ -190,6 +173,13 @@
     if (state.submitting) return;
     hideBanner();
     setStatus('');
+
+    var email = (els.email.value || '').trim();
+    if (!EMAIL_PATTERN.test(email)) {
+      showFieldError('lut-contribute-email-err', '请填写有效邮箱');
+      return;
+    }
+    showFieldError('lut-contribute-email-err', null);
 
     var file = els.file && els.file.files && els.file.files[0];
     if (!file) {
@@ -228,6 +218,7 @@
 
     var fd = new FormData();
     fd.append('file', file);
+    fd.append('email', email);
     fd.append('title', title);
     fd.append('description', description);
     fd.append('tags', tagsResult.value.join(','));
@@ -238,14 +229,19 @@
     if (els.submit) els.submit.disabled = true;
     setStatus('投稿中…');
 
+    var headers = {};
+    var accessToken = null;
+    if (state.client) {
+      try {
+        var sess = await state.client.auth.getSession();
+        accessToken = sess && sess.data && sess.data.session && sess.data.session.access_token;
+      } catch (_e) { accessToken = null; }
+    }
+    if (accessToken) headers['Authorization'] = 'Bearer ' + accessToken;
+
     try {
-      var accessToken = state.session && state.session.access_token;
       var url = CFG.supabaseUrl + '/functions/v1/' + CFG.submitFn;
-      var res = await fetch(url, {
-        method: 'POST',
-        headers: accessToken ? { 'Authorization': 'Bearer ' + accessToken } : {},
-        body: fd
-      });
+      var res = await fetch(url, { method: 'POST', headers: headers, body: fd });
       var data = null;
       try { data = await res.json(); } catch (_e) { data = null; }
       if (!res.ok) {
@@ -255,31 +251,40 @@
           try { window.turnstile.reset(state.turnstileWidgetId); } catch (_e) {}
           state.turnstileToken = '';
         }
+        validateForm();
         return;
       }
-      // success
-      var msg = '已投稿。';
-      if (data && data.status === 'published') {
-        msg = '已直接发布，luts.id = ' + (data.lutId || '?');
+      // success: show success state, hide form
+      if (els.form) els.form.hidden = true;
+      if (els.success) {
+        els.success.hidden = false;
+        var idEl = $('lut-contribute-success-id');
+        var emailEl = $('lut-contribute-success-email');
+        if (idEl) idEl.textContent = (data && data.submissionId) || '?';
+        if (emailEl) emailEl.textContent = email;
+        if (data && data.status === 'published' && data.lutId) {
+          // admin direct publish: replace the success message
+          var successMsg = els.success.querySelector('h3');
+          if (successMsg) successMsg.textContent = '已直接发布';
+          var statusSpan = els.success.querySelector('.lut-mine-badge');
+          if (statusSpan) {
+            statusSpan.textContent = '已发布';
+            statusSpan.classList.remove('pending');
+            statusSpan.classList.add('approved');
+          }
+          var idP = els.success.querySelector('p:nth-of-type(2)');
+          if (idP) idP.innerHTML = 'luts.id = <code>' + data.lutId + '</code>（复制到 _luts/' + (data.slug || '?') + '.md 的 lutId: 字段）';
+        }
       }
-      setStatus(msg, 'ok');
-      // redirect to my submissions after a brief pause
-      setTimeout(function () { window.location.href = '/contribute/mine/'; }, 800);
     } catch (err) {
       setStatus(ERROR_MESSAGES.network, 'error');
+      validateForm();
     } finally {
       state.submitting = false;
-      validateForm();
     }
   }
 
   function bindEvents() {
-    if (els.signinBtn) {
-      els.signinBtn.addEventListener('click', function () {
-        var btn = document.getElementById('auth-nav-signin');
-        if (btn) btn.click();
-      });
-    }
     if (els.file) {
       els.file.addEventListener('change', function () {
         var f = els.file.files && els.file.files[0];
@@ -290,6 +295,17 @@
           showFieldError('lut-contribute-file-err', '仅支持 .cube 文件');
         } else {
           showFieldError('lut-contribute-file-err', null);
+        }
+        validateForm();
+      });
+    }
+    if (els.email) {
+      els.email.addEventListener('input', function () {
+        var v = (els.email.value || '').trim();
+        if (v && !EMAIL_PATTERN.test(v)) {
+          showFieldError('lut-contribute-email-err', '请填写有效邮箱');
+        } else {
+          showFieldError('lut-contribute-email-err', null);
         }
         validateForm();
       });
@@ -321,12 +337,10 @@
 
   function init() {
     els.banner = $('lut-contribute-banner');
-    els.signedout = $('lut-contribute-signedout');
-    els.signedin = $('lut-contribute-signedin');
-    els.signinBtn = $('lut-contribute-signin');
-    els.email = $('lut-contribute-email');
     els.form = $('lut-contribute-form');
+    els.success = $('lut-contribute-success');
     els.file = $('lut-contribute-file');
+    els.email = $('lut-contribute-email');
     els.title = $('lut-contribute-title');
     els.description = $('lut-contribute-description');
     els.tags = $('lut-contribute-tags');
@@ -352,9 +366,15 @@
     state.client = window.supabase.createClient(CFG.supabaseUrl, CFG.anonKey, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
-    state.client.auth.onAuthStateChange(function () { refresh(); });
+    state.client.auth.onAuthStateChange(function () {
+      refreshAdmin();
+      if (isTurnstileConfigured()) renderTurnstile();
+    });
     bindEvents();
-    refresh();
+    refreshAdmin();
+    if (isTurnstileConfigured()) renderTurnstile();
+    else { showBanner('人机验证未配置：投稿功能暂不可用'); disableForm(); }
+    validateForm();
   }
 
   if (document.readyState === 'loading') {

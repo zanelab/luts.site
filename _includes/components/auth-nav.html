@@ -6,9 +6,10 @@
   inline script runs. The script wires up:
 
     - Sign in:  email prompt -> supabase.auth.signInWithOtp({ emailRedirectTo })
-    - User menu: avatar initial + dropdown with "我的投稿" + "退出"
+    - User menu: avatar initial + dropdown with "退出"
     - Admin menu: extra "⚙ 审批" entry when users.role === 'admin'
 
+  Only used for admin sign-in (the regular /contribute/ flow is anonymous).
   The magic link redirects back to the current page.
 -->
 <div class="auth-nav" id="auth-nav">
@@ -23,7 +24,6 @@
       <span class="auth-nav-initial">?</span>
     </button>
     <ul class="auth-nav-dropdown" id="auth-nav-dropdown" role="menu" hidden>
-      <li role="none"><a role="menuitem" href="/contribute/mine/">我的投稿</a></li>
       <li class="auth-nav-admin" role="none" hidden>
         <a role="menuitem" href="/admin/submissions/">⚙ 审批</a>
       </li>

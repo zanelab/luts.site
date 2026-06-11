@@ -1,7 +1,7 @@
 # Design: lut-contribution
 
 ## 概述
-扩展 LUTs.site：注册用户通过 Supabase magic link 登录后投稿 `.cube` LUT；admin 角色的人在 `/admin/submissions/` 看队列并批准 / 拒绝；批准后文件复制到现有 public `luts/` bucket，`luts` SQL 表新增一行，admin 手动同步 markdown 让前台可展示。详见 `proposal.md` 的 What/Why/Scope 与验收标准。
+扩展 LUTs.site：任何访客（无需登录）可在 `/contribute/` 投稿 `.cube` LUT，必须填邮箱（限流 + 拒绝通知用）；admin 通过 Supabase magic link 登录后，在 `/admin/submissions/` 看队列并批准 / 拒绝；批准后文件复制到现有 public `luts/` bucket，`luts` SQL 表新增一行，admin 手动同步 markdown 让前台可展示。详见 `proposal.md` 的 What/Why/Scope 与验收标准。
 
 ## 技术方案
 
@@ -9,17 +9,18 @@
 
 | 维度 | 候选 | 决策 | 理由 |
 |---|---|---|---|
-| Auth 通道 | Supabase magic link / OAuth / 邮箱白名单硬编码 | **magic link (Supabase 托管 UI)** | 与 proposal 一致；免去本站账号体系维护 |
+| 投稿是否要登录 | 必须登录 / 完全匿名 / 表单填邮箱但免登录 | **表单填邮箱 + 免登录（投稿）** | 用户体验：投稿是低频操作，强制登录是巨大摩擦；邮箱仍能限流 + 通知 |
 | Admin 角色 | Supabase Auth + `users.role` / 邮箱白名单 / OAuth group | **`users.role='admin'`** | 走 SQL 手工 bootstrap，可审计可撤销 |
+| Admin 登录通道 | Supabase magic link / OAuth / 邮箱白名单硬编码 | **magic link (Supabase)** | 与投稿解耦：只有 admin 走 magic link；普通访客不感知 |
 | 文件上传机制 | Edge Function multipart / Storage signed URL / RLS 直传 | **Edge Function 收 multipart** | 限流、Turnstile 验证、admin 通知都在一处；存储路径由后端控制 |
 | Slug 生成 | 自动 / 表单可选 / 表单必填 | **自动从 title 生成（碰撞加 -2/-3）** | 用户填最少；管理员投稿允许覆盖（direct_publish=true 时） |
 | 状态推送 | Realtime / 轮询 / 手动刷新 | **手动刷新** | 最低依赖；投稿非高频 |
 | Tags 存储 | JSONB 数组 / 独立 tag 表 | **JSONB 数组** | 前期单语种、不需要按 tag 反查人；后期可平滑迁移 |
 | 详情页路由 | 现有 markdown / 独立 `/luts-db/` / 同一路由 + JS 补 | **保留现有 markdown，admin 手动同步** | 详情页渲染零改动；新 LUT 走 markdown 加 front matter 即可，lutId 来自 SQL `luts.id` |
-| Admin 上传路径 | 同表单 + 「直接发布」 / 独立 / 全走队列 | **同表单 + 「直接发布」** | UI 复用；用户故事对称 |
+| Admin 上传路径 | 同表单 + 「直接发布」 / 独立 / 全走队列 | **同表单 + 「直接发布」** | UI 复用；用户故事对称；admin 登录后才显示该开关 |
 | Edge Function 拆分 | 单 function 处理全部 / 按动作拆 | **按动作拆（`submit-lut` / `moderate-submission`）** | 单一职责，限流和鉴权逻辑互不污染 |
-| 限流策略 | 邮箱 5/24h + 3/1h / 仅 IP / 邮箱+IP | **沿用 `request-lut-download` 的 5/24h + 3/1h** | 同一用户/邮箱心智模型；常量可直接 import 共享 |
-| 跨页 admin 入口 | 顶导 / 浮按钮 / 不放 | **顶导右上角小图标，仅 admin 登录后可见** | 普通用户不被打扰 |
+| 限流策略 | 邮箱 5/24h + 3/1h / 仅 IP / 邮箱+IP | **沿用 `request-lut-download` 的 5/24h（仅邮箱）** | 投稿是低频；邮箱足够；IP 限流容易误伤 NAT |
+| 跨页 admin 入口 | 顶导 / 浮按钮 / 不放 | **顶导右上角「登录」按钮，admin 登录后变头像 + 「⚙ 审批」** | 普通用户看到的是「登录」按钮；不影响投稿体验 |
 
 ## 详细设计
 
@@ -28,7 +29,7 @@
 新增 2 张表（沿用现有 `lut_download_requests` 命名风格）：
 
 ```sql
--- 用户元数据，与 auth.users 1:1
+-- 用户元数据，与 auth.users 1:1（仅 admin 通过 magic link 登录后写入）
 create table public.users (
   id uuid primary key references auth.users(id) on delete cascade,
   email text not null,
@@ -36,19 +37,19 @@ create table public.users (
   created_at timestamptz not null default now()
 );
 
--- 投稿记录
+-- 投稿记录（user_id 可空：匿名投稿无 auth.uid()）
 create type submission_status as enum ('pending', 'approved', 'rejected');
 
 create table public.submissions (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.users(id) on delete cascade,
-  user_email text not null,                   -- 投稿时快照，避免后续改邮箱断链
+  user_id uuid references public.users(id) on delete set null,  -- 匿名时为 NULL
+  user_email text not null,                   -- 投稿时邮箱（必填，限流 + 通知用）
   title text not null check (char_length(title) between 1 and 80),
   description text not null check (char_length(description) between 1 and 500),
   tags jsonb not null default '[]'::jsonb,    -- text 数组
   file_name text not null,                    -- 原始文件名（"boost_v2.cube"）
   file_size bigint not null check (file_size > 0 and file_size <= 10 * 1024 * 1024),
-  storage_path text not null,                 -- "submissions/{user_id}/{submission_id}.cube"
+  storage_path text not null,                 -- "submissions/{user_id_or_anonymous}/{submission_id}.cube"
   status submission_status not null default 'pending',
   reject_reason text check (char_length(reject_reason) >= 10),
   reviewed_by uuid references public.users(id),
@@ -80,7 +81,7 @@ create index luts_created_at_idx on public.luts (created_at desc);
 
 **RLS**：
 - `users` 表：本人可读自己的 row；admin 可读全部；`insert/update` 仅 service_role（即 Edge Function）
-- `submissions` 表：本人可读自己的；admin 可读全部；任何人 INSERT 都禁止（只能通过 service_role Edge Function）；UPDATE 仅 admin（service_role）
+- `submissions` 表：admin 可读全部（用于审批）；anon / 普通用户都不可读（无 SELECT policy）；所有人 INSERT 都禁止（只能通过 service_role Edge Function）
 - `luts` 表：所有人可读；INSERT/UPDATE 仅 service_role
 
 ### API 定义
@@ -89,25 +90,28 @@ create index luts_created_at_idx on public.luts (created_at desc);
 
 接受 `multipart/form-data`：
 - `file` (binary, .cube, 必填)
+- `email` (string, 必填，投稿人邮箱；用于限流 + 拒绝通知)
 - `title` (string, 必填)
 - `description` (string, 必填)
 - `tags` (string, 必填，逗号分隔，后端解析)
 - `direct_publish` (string "true"/"false", 默认 "false")
+- `turnstileToken` (string, 必填)
 
 Headers：
-- `Authorization: Bearer <user JWT>` (必填；从 `apikey` header 也兼容 anon key 验证)
+- `Authorization: Bearer <user JWT>` (可选；仅在 admin 想用 direct_publish 时必填)
 
 验证链：
-1. JWT → `auth.getUser(token)` → 拿到 `user.id`、`user.email`
-2. 如果 `direct_publish=true`，再查 `users` 表，确认 `role='admin'`，否则 403
-3. 表单字段验证（长度、类型、文件 size ≤ 10MB、扩展名 `.cube`）
-4. 限流：`submissions` 表按 `user_email` 24h 滚动计数 ≥ 5 → 429 `rate_limited`
-5. Turnstile token 验证（与下载相同 secret，复用 verifyTurnstile 函数）
-6. 生成 `submission_id = uuid()`
-7. `admin.storage.from('lut-submissions').upload('submissions/{user_id}/{submission_id}.cube', file)`
-8. `admin.from('submissions').insert({...})`
-9. 如果是普通用户投稿（`direct_publish=false`）：发邮件给所有 admin
-10. 如果是 admin 直接发布：调内部 helper `publishLut(submission)` 走完整 publish 链路（同 moderate-submission Approve 流程），但状态直接置 approved
+1. （可选）JWT → `auth.getUser(token)` → 拿到 `user.id`、`role`；解析失败视为匿名
+2. `email` 字段格式校验（必填）
+3. 如果 `direct_publish=true`，要求 JWT + `role='admin'`，否则 403
+4. 表单字段验证（长度、类型、文件 size ≤ 10MB、扩展名 `.cube`）
+5. 限流：`submissions` 表按 `user_email` 24h 滚动计数 ≥ 5 → 429 `rate_limited`
+6. Turnstile token 验证（与下载相同 secret，复用 verifyTurnstile 函数）
+7. 生成 `submission_id = uuid()`
+8. `admin.storage.from('lut-submissions').upload('submissions/{user_id_or_anonymous}/{submission_id}.cube', file)`，匿名投稿用 `submissions/anonymous/{submission_id}.cube`
+9. `admin.from('submissions').insert({ id, user_id, user_email, ...})`，匿名时 `user_id = NULL`
+10. 如果是普通用户投稿（`direct_publish=false`）：发邮件给所有 admin
+11. 如果是 admin 直接发布：调内部 helper `publishLut(submission)` 走完整 publish 链路（同 moderate-submission Approve 流程），但状态直接置 approved
 
 返回：
 - 200: `{ ok: true, submissionId, status: 'pending' | 'published', lutId?, slug? }`
@@ -117,9 +121,8 @@ Headers：
 
 | code | HTTP | 中文 |
 |------|------|------|
-| `unauthenticated` | 401 | 请先登录 |
-| `forbidden` | 403 | 无权操作 |
-| `invalid_input` | 400 | 字段不合法（前端表单错误） |
+| `forbidden` | 403 | 无权操作（direct_publish 但非 admin） |
+| `invalid_input` | 400 | 字段不合法（邮箱 / 标题 / 描述 / tags / 文件） |
 | `invalid_token` | 400 | 人机验证失败 |
 | `rate_limited` | 429 | 投稿过于频繁 |
 | `upload_failed` | 500 | 文件上传失败 |
@@ -161,29 +164,34 @@ Reject 流程：
 
 ```
 Header 顶导
-  ├─ LUTs / Blog  (现有)
-  ├─ 投稿 Contribute         ← 新增
-  └─ ⚙  (admin 登录后右上角小图标)  ← 仅 admin 可见
-       └─ /admin/submissions/
-            ├─ Tabs: Pending (默认) / Approved / Rejected
-            ├─ 列表项：投稿人 / 标题 / 提交时间 / 文件大小 / [详情]
-            └─ 详情抽屉：
-                 ├─ 描述、tags、原始文件名
-                 ├─ [下载预览 .cube] (signed URL, 1h)
-                 ├─ [Approve & Publish]  (admin direct)
-                 └─ [Reject]
-                      └─ 弹出 reason 文本框 (≥10 字)
+  ├─ LUTs / Blog / 投稿  (现有 + 新增)
+  └─ 右上角：[登录] 按钮   (admin 登录后变为头像下拉)
+              ├─ 头像初始
+              ├─ ⚙ 审批  (仅 admin 可见) → /admin/submissions/
+              └─ 退出
 ```
 
-`/contribute/` 页面：
-- 未登录：显示「登录后投稿」按钮 → 跳 Supabase hosted UI → `emailRedirectTo: window.location.origin + '/contribute/'`
-- 登录后：显示投稿表单
-  - admin 看到「直接发布」开关
-  - 提交后：success → 「已投稿，状态 pending；admin 审核后会出现在列表」+ 跳到 `/contribute/mine/`
+`/contribute/` 页面（**无需登录**）：
+- 顶部 banner：投稿流程说明 + 「提交后，管理员审核通过即可发布」
+- 表单字段（顺序）：
+  - **邮箱** (必填，限流 + 拒绝通知用)
+  - .cube 文件 (accept=".cube", ≤10MB)
+  - 标题 (1-80)
+  - 描述 (1-500)
+  - 标签 (≤5 个, 每个 ≤16 字)
+  - Turnstile widget
+  - **仅当 admin 登录后** 额外显示「直接发布」开关
+  - 提交按钮：表单合法 + Turnstile 通过 → enabled
+- 成功：显示「已投稿，状态 pending」+ submissionId；不跳转
 
-`/contribute/mine/` 页面：
-- 当前用户的历史投稿列表（按时间倒序）
-- 状态徽章 + 拒绝时显示 reason
+`/admin/submissions/` 页面：
+- admin 通过 magic link 登录后访问
+- 三个 tab：Pending (默认) / Approved / Rejected
+- 列表项：投稿人邮箱、标题、提交时间（相对）、文件大小、`[详情]`
+- 详情抽屉：
+  - 描述、tags、原始文件名
+  - 「下载预览 .cube」(signed URL, 1h)
+  - 「Approve & Publish」/「Reject」+ reason 文本框 (≥10 字)
 
 ### 邮件模板
 

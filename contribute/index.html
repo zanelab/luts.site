@@ -9,84 +9,101 @@ description: 贡献一个 .cube 调色文件。审核通过后将出现在 LUT �
 
 <div class="lut-contribute" id="lut-contribute">
   <p class="lut-contribute-intro">
-    欢迎贡献你的 .cube 调色文件。提交后会进入管理员审核队列，通过后会自动出现在
+    欢迎贡献你的 .cube 调色文件。<strong>无需登录</strong>，填好表单即可。
+    提交后管理员会审核，通过后将自动出现在
     <a href="/lut-list/">映射表</a>，并在下载页面向所有人开放。
   </p>
 
   <div class="lut-contribute-banner lut-contribute-banner-error" id="lut-contribute-banner" hidden></div>
 
-  <!-- Logged-out state -->
-  <div class="lut-contribute-signedout" id="lut-contribute-signedout">
-    <p>投稿前请先登录。点击下方按钮，输入邮箱即可收到登录链接。</p>
-    <button type="button" class="btn btn-primary" id="lut-contribute-signin">登录后投稿</button>
+  <!-- Success state (shown after successful submission) -->
+  <div class="lut-contribute-success" id="lut-contribute-success" hidden>
+    <h3>已投稿</h3>
+    <p>状态：<span class="lut-mine-badge pending">待审核</span></p>
+    <p>Submission ID: <code id="lut-contribute-success-id"></code></p>
+    <p class="lut-contribute-success-help">
+      管理员通常 1-2 天内审核。如果通过，会自动出现在
+      <a href="/lut-list/">映射表</a>；如果被拒绝，邮箱 <code id="lut-contribute-success-email"></code> 会收到通知。
+    </p>
   </div>
 
-  <!-- Logged-in state -->
-  <div class="lut-contribute-signedin" id="lut-contribute-signedin" hidden>
-    <p class="lut-contribute-user">已登录为 <span id="lut-contribute-email"></span></p>
+  <!-- Form (always visible to anonymous visitors) -->
+  <form id="lut-contribute-form" novalidate>
+    <div class="lut-contribute-field">
+      <label for="lut-contribute-email">投稿人邮箱 <span class="req">*</span></label>
+      <input type="email" id="lut-contribute-email" name="email" maxlength="200" required autocomplete="email" />
+      <p class="lut-contribute-help">用于限流和拒绝时的通知邮件，不会公开显示。</p>
+      <p class="lut-contribute-error" id="lut-contribute-email-err" hidden></p>
+    </div>
 
-    <form id="lut-contribute-form" novalidate>
-      <div class="lut-contribute-field">
-        <label for="lut-contribute-file">.cube 文件 <span class="req">*</span></label>
-        <input type="file" id="lut-contribute-file" name="file" accept=".cube" required />
-        <p class="lut-contribute-help">最大 10MB。.cube 是文本格式，含 3D 颜色查找表定义。</p>
-        <p class="lut-contribute-error" id="lut-contribute-file-err" hidden></p>
-      </div>
+    <div class="lut-contribute-field">
+      <label for="lut-contribute-file">.cube 文件 <span class="req">*</span></label>
+      <input type="file" id="lut-contribute-file" name="file" accept=".cube" required />
+      <p class="lut-contribute-help">最大 10MB。.cube 是文本格式，含 3D 颜色查找表定义。</p>
+      <p class="lut-contribute-error" id="lut-contribute-file-err" hidden></p>
+    </div>
 
-      <div class="lut-contribute-field">
-        <label for="lut-contribute-title">标题 <span class="req">*</span></label>
-        <input type="text" id="lut-contribute-title" name="title" maxlength="80" required />
-        <p class="lut-contribute-counter"><span id="lut-contribute-title-count">0</span> / 80</p>
-        <p class="lut-contribute-error" id="lut-contribute-title-err" hidden></p>
-      </div>
+    <div class="lut-contribute-field">
+      <label for="lut-contribute-title">标题 <span class="req">*</span></label>
+      <input type="text" id="lut-contribute-title" name="title" maxlength="80" required />
+      <p class="lut-contribute-counter"><span id="lut-contribute-title-count">0</span> / 80</p>
+      <p class="lut-contribute-error" id="lut-contribute-title-err" hidden></p>
+    </div>
 
-      <div class="lut-contribute-field">
-        <label for="lut-contribute-description">描述 <span class="req">*</span></label>
-        <textarea id="lut-contribute-description" name="description" maxlength="500" rows="4" required></textarea>
-        <p class="lut-contribute-counter"><span id="lut-contribute-desc-count">0</span> / 500</p>
-        <p class="lut-contribute-error" id="lut-contribute-desc-err" hidden></p>
-      </div>
+    <div class="lut-contribute-field">
+      <label for="lut-contribute-description">描述 <span class="req">*</span></label>
+      <textarea id="lut-contribute-description" name="description" maxlength="500" rows="4" required></textarea>
+      <p class="lut-contribute-counter"><span id="lut-contribute-desc-count">0</span> / 500</p>
+      <p class="lut-contribute-error" id="lut-contribute-desc-err" hidden></p>
+    </div>
 
-      <div class="lut-contribute-field">
-        <label for="lut-contribute-tags">标签</label>
-        <input type="text" id="lut-contribute-tags" name="tags" placeholder="逗号分隔，最多 5 个，每项 ≤ 16 字" />
-        <p class="lut-contribute-help">例如：胶片感, 暖色调, 城市夜景</p>
-        <p class="lut-contribute-error" id="lut-contribute-tags-err" hidden></p>
-      </div>
+    <div class="lut-contribute-field">
+      <label for="lut-contribute-tags">标签</label>
+      <input type="text" id="lut-contribute-tags" name="tags" placeholder="逗号分隔，最多 5 个，每项 ≤ 16 字" />
+      <p class="lut-contribute-help">例如：胶片感, 暖色调, 城市夜景</p>
+      <p class="lut-contribute-error" id="lut-contribute-tags-err" hidden></p>
+    </div>
 
-      <div class="lut-contribute-field lut-contribute-direct" id="lut-contribute-direct-wrap" hidden>
-        <label>
-          <input type="checkbox" id="lut-contribute-direct" />
-          直接发布（仅管理员，跳过审批队列）
-        </label>
-      </div>
+    <div class="lut-contribute-field lut-contribute-direct" id="lut-contribute-direct-wrap" hidden>
+      <label>
+        <input type="checkbox" id="lut-contribute-direct" />
+        直接发布（仅管理员，跳过审批队列）
+      </label>
+    </div>
 
-      <div class="lut-contribute-field">
-        <label>人机验证 <span class="req">*</span></label>
-        <div class="lut-contribute-turnstile" id="lut-contribute-turnstile"></div>
-        <p class="lut-contribute-error" id="lut-contribute-turnstile-err" hidden></p>
-      </div>
+    <div class="lut-contribute-field">
+      <label>人机验证 <span class="req">*</span></label>
+      <div class="lut-contribute-turnstile" id="lut-contribute-turnstile"></div>
+      <p class="lut-contribute-error" id="lut-contribute-turnstile-err" hidden></p>
+    </div>
 
-      <div class="lut-contribute-actions">
-        <button type="submit" class="btn btn-primary" id="lut-contribute-submit" disabled>投稿</button>
-        <span class="lut-contribute-status" id="lut-contribute-status" aria-live="polite"></span>
-      </div>
-    </form>
-  </div>
+    <div class="lut-contribute-actions">
+      <button type="submit" class="btn btn-primary" id="lut-contribute-submit" disabled>投稿</button>
+      <span class="lut-contribute-status" id="lut-contribute-status" aria-live="polite"></span>
+    </div>
+  </form>
 </div>
 
 <style>
   .lut-contribute { max-width: 720px; }
   .lut-contribute-intro { color: #555; margin-bottom: 24px; }
+  .lut-contribute-intro strong { color: #111; }
   .lut-contribute-banner {
     padding: 12px 16px; border-radius: 4px; margin-bottom: 20px;
   }
   .lut-contribute-banner-error { background: #fde7e7; color: #a00; }
   .lut-contribute-banner-warn { background: #fff3cd; color: #856404; }
-  .lut-contribute-signedout {
-    padding: 24px; background: #f8f8f8; border-radius: 4px; text-align: center;
+  .lut-contribute-success {
+    background: #e7f6ec; color: #1a6c2c; padding: 16px 20px;
+    border-radius: 4px; margin-bottom: 24px;
   }
-  .lut-contribute-user { color: #555; margin-bottom: 16px; }
+  .lut-contribute-success h3 { margin: 0 0 8px; }
+  .lut-contribute-success-help { font-size: 13px; color: #1a6c2c; margin: 8px 0 0; }
+  .lut-mine-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 3px;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .lut-mine-badge.pending { background: #fff3cd; color: #856404; }
   .lut-contribute-field { margin-bottom: 20px; }
   .lut-contribute-field label { display: block; font-weight: 600; margin-bottom: 6px; }
   .lut-contribute-field .req { color: #c00; }

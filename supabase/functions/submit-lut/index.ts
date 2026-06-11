@@ -1,27 +1,28 @@
 /*
  * submit-lut
  *
- * Single-file Supabase Edge Function. Auth-gated multipart upload that
- * accepts a .cube LUT, validates it, stores it in a private bucket,
- * inserts a `submissions` row, and notifies admins.
+ * Single-file Supabase Edge Function. Multipart upload that accepts a
+ * .cube LUT anonymously (no auth required), validates it, stores it in
+ * a private bucket, inserts a `submissions` row, and notifies admins.
  *
  * POST  /functions/v1/submit-lut
  * Content-Type: multipart/form-data
  * Body  {
  *   file: File (.cube, <= 10MB),
+ *   email: string (required; for rate limit + reject notification),
  *   title: string (1-80),
  *   description: string (1-500),
  *   tags: string (comma-separated, 0-5 tags, each <=16 chars),
  *   turnstileToken: string,
  *   direct_publish: "true" | "false"  (admin-only; "true" skips the queue)
  * }
- * Headers: Authorization: Bearer <user JWT>
+ * Headers:
+ *   Authorization: Bearer <admin JWT>  (optional; required for direct_publish)
  *
  * Returns:
  *   200  { ok: true, submissionId, status: "pending" | "published", lutId?, slug? }
  *   400  { error: "invalid_input" | "invalid_token" }
- *   401  { error: "unauthenticated" }
- *   403  { error: "forbidden" }
+ *   403  { error: "forbidden" }  (direct_publish=true but caller is not admin)
  *   429  { error: "rate_limited" }
  *   500  { error: "upload_failed" | "internal" }
  *   405  { error: "method_not_allowed" }
@@ -29,14 +30,14 @@
  * Pipeline:
  *   1. Preflight + method check
  *   2. Parse multipart
- *   3. Auth: verify user JWT via anon-key client
- *   4. Look up role (admin gate for direct_publish)
- *   5. Validate fields + file (.cube, <=10MB, text-like content)
- *   6. Verify Cloudflare Turnstile token
- *   7. Rate limit (email 5/24h, rolling)
- *   8. Upload to lut-submissions/{user_id}/{submission_id}.cube
- *   9. Insert submissions row
- *  10. If direct_publish=true: publishApprovedLut() (same path as approve)
+ *   3. Optional auth: verify JWT if Authorization header present.
+ *      Anon submissions skip this step; direct_publish=true requires admin.
+ *   4. Validate fields + file (.cube, <=10MB, text-like content)
+ *   5. Verify Cloudflare Turnstile token
+ *   6. Rate limit by form email (5/24h, rolling, fail-open)
+ *   7. Upload to lut-submissions/{user_id_or_anonymous}/{submission_id}.cube
+ *   8. Insert submissions row (user_id=NULL when anonymous)
+ *   9. If direct_publish=true: publishApprovedLut() (same path as approve)
  *      Else: email all admins
  *
  * Required env (set via `supabase secrets set ...`):
@@ -55,6 +56,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // ===== Constants ============================================================
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const MAX_TITLE_LEN = 80;
 const MAX_DESCRIPTION_LEN = 500;
@@ -126,6 +128,7 @@ Deno.serve(async (req) => {
   }
 
   const file = form.get("file");
+  const emailRaw = stringField(form, "email");
   const title = stringField(form, "title");
   const description = stringField(form, "description");
   const tagsRaw = stringField(form, "tags");
@@ -136,17 +139,26 @@ Deno.serve(async (req) => {
     return jsonResponse(req, 400, { error: "invalid_input" });
   }
 
-  // -- Step 2: auth (verify JWT)
-  const user = await authedUser(req, supabaseUrl, anonKey);
-  if (!user) return jsonResponse(req, 401, { error: "unauthenticated" });
+  // -- Step 2: optional auth (verify JWT if header present)
+  // Anonymous submissions are allowed. The JWT, when present, is only used
+  // to gate direct_publish — it doesn't gate the submission itself.
+  const authed = await tryAuthedUser(req, supabaseUrl, anonKey);
+  if (authed === "error") {
+    return jsonResponse(req, 500, { error: "internal" });
+  }
+  const user = authed; // null = anonymous
 
   // -- Step 3: admin gate for direct_publish
-  if (directPublishRaw === "true" && user.role !== "admin") {
+  if (directPublishRaw === "true" && (!user || user.role !== "admin")) {
     return jsonResponse(req, 403, { error: "forbidden" });
   }
-  const directPublish = directPublishRaw === "true" && user.role === "admin";
+  const directPublish = directPublishRaw === "true" && user?.role === "admin";
 
   // -- Step 4: validate fields
+  const emailTrim = emailRaw.trim();
+  if (!EMAIL_PATTERN.test(emailTrim)) {
+    return jsonResponse(req, 400, { error: "invalid_input" });
+  }
   const titleTrim = title.trim();
   if (titleTrim.length < 1 || titleTrim.length > MAX_TITLE_LEN) {
     return jsonResponse(req, 400, { error: "invalid_input" });
@@ -187,12 +199,12 @@ Deno.serve(async (req) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  // -- Step 7: rate limit (per email, rolling 24h)
+  // -- Step 7: rate limit (per email, rolling 24h, from form field)
   const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const { count: recentCount, error: rlErr } = await admin
     .from("submissions")
     .select("id", { count: "exact", head: true })
-    .eq("user_email", user.email)
+    .eq("user_email", emailTrim)
     .gte("created_at", since24h);
 
   if (rlErr) {
@@ -204,7 +216,8 @@ Deno.serve(async (req) => {
 
   // -- Step 8: upload to private bucket
   const submissionId = crypto.randomUUID();
-  const storagePath = `submissions/${user.id}/${submissionId}.cube`;
+  const userSegment = user?.id ?? "anonymous";
+  const storagePath = `submissions/${userSegment}/${submissionId}.cube`;
 
   const { error: upErr } = await admin.storage
     .from(BUCKET_PRIVATE)
@@ -221,8 +234,8 @@ Deno.serve(async (req) => {
   // -- Step 9: insert submissions row
   const { error: insErr } = await admin.from("submissions").insert({
     id: submissionId,
-    user_id: user.id,
-    user_email: user.email,
+    user_id: user?.id ?? null,
+    user_email: emailTrim,
     title: titleTrim,
     description: descTrim,
     tags,
@@ -266,7 +279,7 @@ Deno.serve(async (req) => {
       from: Deno.env.get("EMAIL_FROM") ?? "",
       apiKey: Deno.env.get("RESEND_API_KEY") ?? "",
       title: titleTrim,
-      userEmail: user.email,
+      userEmail: emailTrim,
       submissionId,
     });
   } catch (err) {
@@ -318,11 +331,16 @@ function jsonResponse(
 
 // ===== Auth =================================================================
 
-async function authedUser(
+/**
+ * Best-effort auth: returns the verified user if Authorization header
+ * carries a valid JWT, null if no header / anon, or "error" on infra
+ * failure (caller decides whether to 500 or treat as anon).
+ */
+async function tryAuthedUser(
   req: Request,
   supabaseUrl: string,
   anonKey: string,
-): Promise<AuthedUser | null> {
+): Promise<AuthedUser | null | "error"> {
   const authHeader = req.headers.get("authorization") ?? "";
   const m = authHeader.match(/^Bearer\s+(.+)$/i);
   if (!m) return null;
@@ -336,8 +354,8 @@ async function authedUser(
   const { data, error } = await userClient.auth.getUser(token);
   if (error || !data.user) return null;
 
-  // Look up role from public.users (may not exist yet for very first login,
-  // but the auth trigger should have created it; fall back to "user").
+  // Look up role from public.users (trigger creates it on first magic-link
+  // login; treat missing row as "user" — should be rare).
   const adminClient = createClient(
     supabaseUrl,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -351,7 +369,7 @@ async function authedUser(
 
   if (roleErr) {
     console.error("role lookup failed", roleErr);
-    return null;
+    return "error";
   }
   if (row) {
     return { id: row.id, email: row.email, role: row.role };

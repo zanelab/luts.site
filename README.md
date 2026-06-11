@@ -84,16 +84,15 @@ luts.site/
 │   ├── base.html            # 全局 <html>/<head>/<body> 骨架
 │   ├── lut.html             # LUT 详情页（带 sticky 侧栏 + 下载弹窗）
 │   ├── post.html            # 博客详情页
-│   ├── contribute.html      # /contribute/ + /contribute/mine/ 投稿页
+│   ├── contribute.html      # /contribute/ 匿名投稿页
 │   └── admin.html           # /admin/submissions/ 审批页
 ├── _includes/
 │   ├── components/
 │   │   └── auth-nav.html    # 顶导的登录 / 头像下拉（auth-aware）
 │   ├── header.html
 │   └── head-scripts.html    # Supabase + Turnstile CDN 引入
-├── contribute/              # 投稿页（layout: contribute）
-│   ├── index.html           # /contribute/
-│   └── mine.html            # /contribute/mine/
+├── contribute/              # 匿名投稿页（layout: contribute）
+│   └── index.html           # /contribute/
 ├── admin/                   # 管理员页
 │   └── submissions.html     # /admin/submissions/
 ├── _luts/                   # LUT collection（前缀以 _ 表示 Jekyll collection 源目录）
@@ -190,22 +189,28 @@ Content-Type: application/json
 
 ## 投稿流程（贡献 LUT）
 
-普通用户通过 magic link 登录后可投稿 `.cube` LUT；admin 在审批队列中通过后，文件自动复制到公开桶并写入 `public.luts` 表。
+任何访客（**无需登录**）可在 `/contribute/` 投稿 `.cube` LUT；admin 通过 magic link 登录后在审批队列中处理；通过后文件自动复制到公开桶并写入 `public.luts` 表。
 
-### 用户故事
+### 用户故事（访客）
 
-1. 用户访问 `/contribute/`，点「登录后投稿」→ 输入邮箱 → 收到 magic link → 跳回 `/contribute/`
-2. 填表（.cube ≤ 10MB / 标题 1-80 / 描述 1-500 / ≤ 5 tags）+ Turnstile → 提交
-3. 跳到 `/contribute/mine/`，看到 status=pending
-4. admin 审批（通过 / 拒绝 + 原因）；通过后 luts 表新增行 + 公开桶出现 `{slug}.cube`
-5. admin 把 luts.id 复制到 `_luts/{slug}.md` 的 `lutId:`，push → Jekyll build → 前台 `/lut/{slug}.html` 可下载
+1. 访问 `/contribute/`，填邮箱（必填，限流 + 拒绝通知用）+ .cube（≤ 10MB）+ 标题（1-80）+ 描述（1-500）+ ≤ 5 tags
+2. 提交 → 文件存 `lut-submissions/submissions/anonymous/{submission_id}.cube` + `submissions` 表 status=pending + 所有 admin 收到邮件
+3. 看到「已投稿，状态 pending」+ submissionId。如果被拒，邮箱会收到通知
+
+### 用户故事（admin）
+
+1. 顶导「登录」→ 邮箱 magic link → 头像出现在右上角
+2. 进 `/contribute/`，多出「直接发布」开关；勾上后提交 = 跳过队列
+3. 进 `/admin/submissions/`，三个 tab：pending（默认）/ approved / rejected
+4. 点详情抽屉：「下载预览 .cube」(signed URL, 1h) /「Approve & Publish」/「Reject + 原因（≥10 字）」
+5. 通过后：luts 表新增行 + 公开桶出现 `{slug}.cube` + admin 需手动把 luts.id 复制到 `_luts/{slug}.md` 的 `lutId:`，push → Jekyll build → 前台 `/lut/{slug}.html` 可下载
 
 ### 管理员一次性设置
 
-1. 跑数据库迁移：`supabase/db push`（创建 users / submissions 表 + luts 扩展 + RLS + 触发器）
+1. 跑数据库迁移：`supabase db push`（创建 users / submissions 表 + luts 扩展 + RLS + 触发器 + 允许 user_id 为空）
 2. Dashboard → Storage → New bucket：`lut-submissions`（私有）
 3. 部署函数：`supabase functions deploy submit-lut && supabase functions deploy moderate-submission`
-4. 提升第一个 admin：参见 `supabase/sql/bootstrap-admin.sql`
+4. admin 用 magic link 登录后，参见 `supabase/sql/bootstrap-admin.sql` 把 role 提升为 `admin`
 
 ### 详细 API 与运维
 

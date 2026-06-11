@@ -270,4 +270,43 @@
 
 ---
 
-## Amend: TBD（执行阶段按需追加）
+## Amend 1: 匿名投稿（2026-06-12）
+
+### 背景
+原始设计：投稿需要登录（magic link）。这给低频操作加了不必要的摩擦。改成：投稿完全匿名，**仅 admin 登录审批**。
+
+### 范围变更
+
+| 项 | 原 | 新 |
+|---|---|---|
+| `/contribute/` 访问 | 未登录：显示「登录后投稿」按钮 | 任何访客直接看到投稿表单 |
+| `/contribute/` 必填字段 | file + title + description + tags | **+ email** (新增) |
+| JWT 要求 | `submit-lut` 强制要求 | **可选**；仅当 `direct_publish=true` 时强制 |
+| `direct_publish` 开关 | admin 登录后显示 | 同样 admin 登录后显示（保留） |
+| `/contribute/mine/` | 登录用户看自己历史 | **整页移除**（用户决策） |
+| 顶导「我的投稿」 | 登录后下拉里有 | **移除**（指向的页面没了） |
+| `submissions.user_id` | `not null` | **可空**（匿名投稿用 NULL） |
+| `submissions.user_email` | 投稿时快照 | **改为投稿人必填**（限流 + 拒绝通知用） |
+| RLS on `submissions` | 登录用户能看自己的 + admin 看全部 | **仅 admin 能看**（普通用户不感知有投稿） |
+| 限流 | 邮箱 5/24h | 邮箱 5/24h（不变；只是来源变成表单而不是 JWT） |
+
+### 任务清单
+
+- [x] 更新 `spec.md`：合并「用户认证」+ 「投稿提交」为新版本；删除「投稿人历史」整段
+- [x] 更新 `design.md`：决策表 11 项；数据模型 user_id 可空；submit-lut 改用表单 email；RLS 调整；UI 草图重画
+- [x] 新增 SQL 迁移 `20260612000000_lut_contribution_anonymous.sql`：`alter submissions.user_id drop not null`（idempotent）
+- [x] 改 `submit-lut/index.ts`：
+  - [x] JWT 改为可选：解析失败不返回 401，视为匿名
+  - [x] 表单新增 `email` 必填字段，写入 `submissions.user_email`
+  - [x] 匿名时 `user_id = NULL`，storage_path 用 `submissions/anonymous/{submission_id}.cube`
+  - [x] 移除 `unauthenticated` 错误码（不再适用）
+- [x] 改 `moderate-submission/index.ts`：无功能变更（流程不变）
+- [x] 删 `contribute/mine.html` + `assets/js/lut-mine.js` + 布局里的 script 选择
+- [x] 改 `contribute/index.html`：去掉登录 CTA；表单加 email 字段；不再有"我的投稿"链接
+- [x] 改 `assets/js/contribute.js`：去掉登录态分支；email 校验；无登录态
+- [x] 改 `_includes/components/auth-nav.html`：头像下拉移除「我的投稿」项（仅 admin 看得到「⚙ 审批」+ 「退出」）
+- [x] 改 `admin/submissions.html` / `admin-submissions.js`：列表项照旧（已按 user_email 显示），无功能变更
+- [x] 改 `supabase/README.md` 反映新流程
+- [x] 改根 `README.md` 反映新流程（投稿步骤 / 接口约定）
+- [x] `make build` 0 退出；`_site/` 含新的 3 个页面（admin/submissions + contribute + lut-list 等），无 `contribute/mine/`
+- [x] 提交并推送到 `feature/lut-contribution` 分支
