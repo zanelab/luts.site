@@ -32,11 +32,14 @@
             <div class="butter-button hidden_menu">
                 <div></div>
             </div>
-            <a class="auth-nav-entry" href="{{ site.baseurl }}/admin/submissions/">🔒 管理</a>
-            {% include components/auth-nav.html %}
+            <a class="auth-nav-entry" href="{{ site.baseurl }}/admin/submissions/">
+              <i class="fa fa-lock"></i>
+            </a>
         </div>
     </div>
 </header>
+
+{% include components/auth-nav.html %}
 
 <!-- Side Header -->
 <div class="side-header main-row header_left_side dark">
@@ -52,8 +55,10 @@
       <a href="{{ site.baseurl }}/" target="_self"><i class="fa fa-facebook"></i> <span>Facebook</span></a>
       <a href="{{ site.baseurl }}/" target="_self"><i class="fa fa-twitter"></i> <span>Twitter</span></a>
       <a href="{{ site.baseurl }}/" target="_self"><i class="fa fa-instagram"></i> <span>Instagram</span></a>
+      <a class="auth-nav-entry auth-nav-entry--side" href="{{ site.baseurl }}/admin/submissions/">
+        <i class="fa fa-lock"></i> <span>管理</span>
+      </a>
     </div>
-    <a class="auth-nav-entry auth-nav-entry--side" href="{{ site.baseurl }}/admin/submissions/">🔒 管理</a>
   </div>
   <span class="dec-line"></span>
 </div>
