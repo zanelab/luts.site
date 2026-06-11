@@ -42,10 +42,9 @@ make clean
 |------|---------|------|------|
 | `SUPABASE_URL` | 是 | `https://abcd1234.supabase.co` | Supabase 项目 URL（公开值） |
 | `SUPABASE_ANON_KEY` | 是 | `eyJhbGciOi...` | 前端使用的 anon key（**严禁填 service_role**） |
-| `SUPABASE_EDGE_FUNCTION` | 是 | `request-lut-download` | 已部署的下载 Edge Function 名称 |
 | `TURNSTILE_SITE_KEY` | 是 | `0x4AAAA...` | Cloudflare Turnstile 站点公钥，必须 `0x` 开头 |
 
-> 投稿用的 `submit-lut` 和审批用的 `moderate-submission` 这两个 Edge Function 名称在 JS 里硬编码（`assets/js/contribute.js` / `assets/js/admin-submissions.js` 顶部常量），不通过环境变量配置。
+> Edge Function 名称（`request-lut-download` / `submit-lut` / `moderate-submission`）在 JS 里硬编码为文件顶部常量（`assets/js/lut-download.js` / `contribute.js` / `admin-submissions.js`），不通过环境变量配置——它们跟源码绑定，部署时不会变。
 
 ### 这些值从哪里取
 
@@ -55,17 +54,16 @@ make clean
 
 ### 注入机制
 
-`make build` / `make serve` 会先跑 `script/build-config.sh`，把 `.env` 里的四个变量转换为：
+`make build` / `make serve` 会先跑 `script/build-config.sh`，把 `.env` 里的变量转换为：
 
 ```js
 // assets/js/supabase-config.js（自动生成，已被 git 忽略，不要手改）
 window.LUTSITE_SUPABASE_URL = '...';
 window.LUTSITE_SUPABASE_ANON_KEY = '...';
-window.LUTSITE_SUPABASE_EDGE_FUNCTION = '...';
 window.LUTSITE_TURNSTILE_SITE_KEY = '...';
 ```
 
-LUT 详情页通过这四个 `window.*` 全局调用 Supabase Edge Function 和渲染 Turnstile。
+LUT 详情页通过这三个 `window.*` 全局调用 Supabase Edge Function 和渲染 Turnstile。
 
 ### 无 `.env` 时的降级
 
@@ -161,7 +159,7 @@ excerpt: "摘要"
 前端通过 `@supabase/supabase-js` 调用：
 
 ```
-POST {SUPABASE_URL}/functions/v1/{SUPABASE_EDGE_FUNCTION}
+POST {SUPABASE_URL}/functions/v1/request-lut-download
 Authorization: Bearer {SUPABASE_ANON_KEY}
 Content-Type: application/json
 
@@ -228,7 +226,6 @@ Content-Type: application/json
 |-----------|-----------------|------|
 | `SUPABASE_URL` | `SUPABASE_URL` | 必填 |
 | `SUPABASE_ANON_KEY` | `SUPABASE_ANON_KEY` | 必填，**仍是 anon key**，不要填 service_role |
-| `SUPABASE_EDGE_FUNCTION` | `SUPABASE_EDGE_FUNCTION` | 必填，通常是 `request-lut-download` |
 | `TURNSTILE_SITE_KEY` | `TURNSTILE_SITE_KEY` | 必填，`0x` 开头 |
 
 > **为什么放在 Environment 而不是 Repository level？**

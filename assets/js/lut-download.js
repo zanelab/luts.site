@@ -11,9 +11,12 @@
   var CFG = {
     supabaseUrl: window.LUTSITE_SUPABASE_URL || '',
     anonKey: window.LUTSITE_SUPABASE_ANON_KEY || '',
-    edgeFn: window.LUTSITE_SUPABASE_EDGE_FUNCTION || '',
     turnstileSiteKey: window.LUTSITE_TURNSTILE_SITE_KEY || ''
   };
+
+  // Tied to supabase/functions/request-lut-download/index.ts. Not
+  // user-configurable; renaming the function requires updating this constant.
+  var EDGE_FUNCTION = 'request-lut-download';
 
   var TURNSTILE_KEY_PATTERN = /^0x[A-Za-z0-9_-]+$/;
   var EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -40,8 +43,7 @@
 
   function isConfigValid() {
     return /^https:\/\/[a-zA-Z0-9-]+\.supabase\.co/.test(CFG.supabaseUrl) &&
-      CFG.anonKey && CFG.anonKey !== 'TODO' &&
-      CFG.edgeFn && CFG.edgeFn !== 'TODO';
+      CFG.anonKey && CFG.anonKey !== 'TODO';
   }
 
   function isTurnstileConfigured() {
@@ -280,7 +282,7 @@
       return;
     }
 
-    client.functions.invoke(CFG.edgeFn, {
+    client.functions.invoke(EDGE_FUNCTION, {
       body: { lutId: lutId, email: email, turnstileToken: state.turnstileToken }
     }).then(function (resp) {
       var data = resp && resp.data;
