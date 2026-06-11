@@ -28,8 +28,8 @@
 - [x] 重复登录不重复插入（`on conflict do nothing`）
 
 ### 1.4 Storage bucket
-- [ ] **用户手动**：Supabase Dashboard → Storage → New bucket → name=`lut-submissions`、Public=**OFF**
-- [ ] **用户手动**：bucket 写策略留默认（仅 service_role 可写）；可选：在 Storage Policies 加 policy 仅允许 service_role 读
+- [x] **用户手动**：Supabase Dashboard → Storage → New bucket → name=`lut-submissions`、Public=**OFF**
+- [x] **用户手动**：bucket 写策略留默认（仅 service_role 可写）；可选：在 Storage Policies 加 policy 仅允许 service_role 读
 
 ## Phase 2: Edge Function `submit-lut`
 

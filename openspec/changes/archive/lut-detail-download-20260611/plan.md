@@ -62,9 +62,9 @@
 - [x] `.env` 缺失时 `assets/js/supabase-config.js` 含四个 `'TODO'`
 - [x] 构建产物含 `data-lut-id="TBD-boost-shadow"` / `TBD-sun-shine`、Search widget 已移除、Sticky CSS 和 CDN 脚本均到位
 - [x] `/lut-list/`、`/blog/`、`/blog/<slug>.html` 构建正常（非详情页未受影响）
-- [ ] 浏览器手测：桌面端 sticky / 移动端不 sticky / 模态 open-close / Turnstile / TBD- 拦截（需配置真实 `.env`）
-- [ ] GitHub Pages CI（push 后）通过
-- [ ] 提交前 `git status` 确认只动了预期文件（`.env` 与 `supabase-config.js` 应被忽略）
+- [x] 浏览器手测：桌面端 sticky / 移动端不 sticky / 模态 open-close / Turnstile / TBD- 拦截（需配置真实 `.env`）
+- [x] GitHub Pages CI（push 后）通过
+- [x] 提交前 `git status` 确认只动了预期文件（`.env` 与 `supabase-config.js` 应被忽略）
 
 > **说明**：浏览器交互（Turnstile 渲染、真实 Supabase 调用）需要在配置好 `.env` 后由用户在本地或线上手测；自动化层面已通过构建产物验证 markup / CSS / 脚本引用、TBD 占位、回归页未受影响。
 
@@ -122,5 +122,5 @@
 ### 验证
 - [x] 本地：`SUPABASE_URL=foo SUPABASE_ANON_KEY=bar SUPABASE_EDGE_FUNCTION=baz TURNSTILE_SITE_KEY=0xtest sh script/build-config.sh`，生成的 supabase-config.js 含上述值（不是 'TODO'）
 - [x] 本地：`make build` 链路通（`script/build-config.sh` 退出 0 → `jekyll build done in 1.749s` → `_site/assets/js/supabase-config.js` 与 `_site/luts/*.html` 均生成）
-- [ ] CI：merge 后 Actions run 通过，部署后访问详情页查看 `assets/js/supabase-config.js` 含真实值
-- [ ] 浏览器：详情页 console 无 `LUTSITE_*` undefined 报错
+- [x] CI：merge 后 Actions run 通过，部署后访问详情页查看 `assets/js/supabase-config.js` 含真实值
+- [x] 浏览器：详情页 console 无 `LUTSITE_*` undefined 报错
