@@ -30,7 +30,9 @@
  *   RESEND_API_KEY            Resend API key (re_xxxxxxxx)
  *   EMAIL_FROM                e.g. "LUTs.site <download@luts.site>"
  *   STORAGE_BUCKET            (optional, default "luts")
- *   SITE_ORIGIN               (optional, used for CORS; echoes Origin if unset)
+ *   SITE_ORIGIN               (optional, comma-separated list of allowed origins;
+ *                                e.g. "https://luts.site,http://127.0.0.1:4000";
+ *                                echoes Origin if unset)
  *   SIGNED_URL_EXPIRES_IN     (optional, seconds, default 1800)
  *
  * Auto-injected by Supabase runtime (do NOT set manually):
@@ -232,11 +234,18 @@ Deno.serve(async (req) => {
 // ===== CORS =================================================================
 
 function corsHeaders(req: Request): HeadersInit {
+  // SITE_ORIGIN may be a comma-separated list (e.g.
+  // "https://luts.site,http://127.0.0.1:4000") to support local dev
+  // alongside the production origin. If the request's origin matches
+  // any entry, echo it (so credentials / Authorization headers work);
+  // otherwise fall back to the first entry. If SITE_ORIGIN is unset,
+  // echo the request origin (dev-only) — never wildcard with credentials.
   const siteOrigin = Deno.env.get("SITE_ORIGIN") ?? "";
+  const allowed = siteOrigin.split(",").map((s) => s.trim()).filter(Boolean);
   const reqOrigin = req.headers.get("origin") ?? "";
-  // Pin to SITE_ORIGIN when configured; echo request origin in local dev.
-  // Never wildcard alongside credentials.
-  const allowOrigin = siteOrigin || reqOrigin || "*";
+  const allowOrigin = allowed.includes(reqOrigin)
+    ? reqOrigin
+    : (allowed[0] || reqOrigin || "*");
   return {
     "Access-Control-Allow-Origin": allowOrigin,
     "Access-Control-Allow-Headers": CORS_ALLOWED_HEADERS,
