@@ -169,18 +169,27 @@
 
   async function loadList() {
     if (!state.client) return;
-    var r = await state.client
-      .from('submissions')
-      .select('id, user_email, title, description, tags, file_name, file_size, storage_path, status, reject_reason, created_at, reviewed_at')
-      .eq('status', state.tab)
-      .order('created_at', { ascending: false })
-      .limit(50);
-    if (r.error) {
-      showError('查询失败：' + r.error.message);
-      return;
+    // In-flight guard: if a load is already running for the current tab,
+    // don't fire another. Tab clicks can otherwise fire overlapping
+    // /submissions queries that race and stomp each other's results.
+    if (state.loading) return;
+    state.loading = true;
+    try {
+      var r = await state.client
+        .from('submissions')
+        .select('id, user_email, title, description, tags, file_name, file_size, storage_path, status, reject_reason, created_at, reviewed_at')
+        .eq('status', state.tab)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (r.error) {
+        showError('查询失败：' + r.error.message);
+        return;
+      }
+      state.list = r.data || [];
+      renderList();
+    } finally {
+      state.loading = false;
     }
-    state.list = r.data || [];
-    renderList();
   }
 
   function setTab(tab) {

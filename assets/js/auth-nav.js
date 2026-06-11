@@ -29,6 +29,10 @@
   var supabaseUrl = window.LUTSITE_SUPABASE_URL;
   var anonKey = window.LUTSITE_SUPABASE_ANON_KEY;
 
+  // Role cache, keyed by user.id. Reset on sign out. Stops
+  // auth-nav.js from re-querying /users on every auth state event.
+  var roleCache = { userId: null, role: null };
+
   if (!supabaseUrl || !anonKey || supabaseUrl === 'TODO' || anonKey === 'TODO') {
     var el = document.getElementById('auth-nav');
     if (el) el.style.display = 'none';
@@ -101,11 +105,17 @@
 
   async function loadRole(userId) {
     if (!userId) return 'user';
+    if (roleCache.userId === userId && roleCache.role !== null) return roleCache.role;
     try {
       var r = await client.from('users').select('role').eq('id', userId).maybeSingle();
-      if (r.error || !r.data) return 'user';
-      return r.data.role || 'user';
+      if (r.error || !r.data) {
+        roleCache = { userId: userId, role: 'user' };
+        return 'user';
+      }
+      roleCache = { userId: userId, role: r.data.role || 'user' };
+      return roleCache.role;
     } catch (_e) {
+      roleCache = { userId: userId, role: 'user' };
       return 'user';
     }
   }
@@ -355,6 +365,7 @@
     if (els.signoutBtn) {
       els.signoutBtn.addEventListener('click', async function () {
         try { await client.auth.signOut(); } catch (_e) {}
+        roleCache = { userId: null, role: null };
         els.dropdown.hidden = true;
         setSignedOut();
       });
@@ -383,7 +394,14 @@
     els.codeEmail = $('auth-nav-code-email');
 
     bindEvents();
-    client.auth.onAuthStateChange(function () { refresh(); });
+    // Filter events: skip the redundant INITIAL_SESSION (we already trigger
+    // refresh() below) and TOKEN_REFRESHED (JWT renewal doesn't change
+    // user/role — would otherwise re-query /users every ~hour).
+    client.auth.onAuthStateChange(function (event) {
+      if (event === 'INITIAL_SESSION') return;
+      if (event === 'TOKEN_REFRESHED') return;
+      refresh();
+    });
     refresh();
   }
 
