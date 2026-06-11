@@ -348,6 +348,7 @@
     }
     hide('lut-admin-denied');
     hide('lut-admin-denied-hint');
+    hide('lut-admin-loading');
     show('lut-admin-content');
     // pick initial tab from URL hash
     var hash = (window.location.hash || '').replace('#', '');
