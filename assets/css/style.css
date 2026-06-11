@@ -462,35 +462,35 @@ select {
 }
 
 input::-webkit-input-placeholder {
-  color: inherit;
+  color: #444;
 }
 
 input::-moz-placeholder {
-  color: inherit;
+  color: #444;
 }
 
 input:-moz-placeholder {
-  color: inherit;
+  color: #444;
 }
 
 input:-ms-input-placeholder {
-  color: inherit;
+  color: #444;
 }
 
 textarea::-webkit-input-placeholder {
-  color: inherit;
+  color: #444;
 }
 
 textarea::-moz-placeholder {
-  color: inherit;
+  color: #444;
 }
 
 textarea:-moz-placeholder {
-  color: inherit;
+  color: #444;
 }
 
 textarea:-ms-input-placeholder {
-  color: inherit;
+  color: #444;
 }
 
 *:focus {
