@@ -14,7 +14,9 @@
  *   title?:       string  (1-80 chars)
  *   description?: string  (1-500 chars)
  *   tags?:        string[]  (0-5 entries, each <=16 chars)
- *   slug?:        string  (1-60 chars; renames .cube file in storage)
+ *   slug?:        string  (1-60 chars; storage_path is keyed on the row
+ *                          id, so renaming the slug never relocates the
+ *                          .cube file)
  * }
  * Headers: Authorization: Bearer <admin JWT>
  *
@@ -34,11 +36,10 @@
  *   2. Verify admin JWT
  *   3. Parse + validate body
  *   4. Load current row (404 if missing)
- *   5. If slug is changing, move the .cube file in storage:
- *      download from old path, upload to new path, delete old path.
- *      If move fails, abort the update (no DB write).
- *   6. Update row; if a slug move succeeded and the row update fails,
- *      compensate by moving the file back.
+ *   5. If slug is changing, check the new slug isn't taken (409 slug_taken).
+ *      storage_path is keyed on the row's uuid id, so renaming the slug
+ *      never moves the .cube file in storage.
+ *   6. Update row.
  *   7. Return the updated row.
  *
  * Delete pipeline:
@@ -234,11 +235,10 @@ async function handleUpdate(
   }
   if (!current) return jsonResponse(req, 404, { error: "not_found" });
 
-  // 2. If slug is changing, move the .cube file before any DB write so we
-  //    can abort cleanly on failure.
-  let nextStoragePath = current.storage_path;
+  // 2. If slug is changing, make sure the new one isn't taken by another
+  //    row. storage_path is keyed on the uuid id (not slug), so renaming
+  //    the slug never touches the .cube file in storage.
   if (fields.slug && fields.slug !== current.slug) {
-    // Check the new slug is free (other rows), not just unused historically.
     const { data: clash, error: clashErr } = await admin
       .from("luts")
       .select("id")
@@ -250,18 +250,6 @@ async function handleUpdate(
       return jsonResponse(req, 500, { error: "internal" });
     }
     if (clash) return jsonResponse(req, 409, { error: "slug_taken" });
-
-    const newPath = `${fields.slug}.cube`;
-    const moved = await moveStorageObject(
-      admin,
-      current.storage_path,
-      newPath,
-    );
-    if (!moved.ok) {
-      console.error("storage rename failed", moved.error);
-      return jsonResponse(req, 500, { error: "internal" });
-    }
-    nextStoragePath = newPath;
   }
 
   // 3. Build the update payload.
@@ -269,13 +257,9 @@ async function handleUpdate(
   if (fields.title !== undefined) patch.title = fields.title;
   if (fields.description !== undefined) patch.description = fields.description;
   if (fields.tags !== undefined) patch.tags = fields.tags;
-  if (fields.slug !== undefined) {
-    patch.slug = fields.slug;
-    patch.storage_path = nextStoragePath;
-  }
+  if (fields.slug !== undefined) patch.slug = fields.slug;
 
-  // 4. Apply. If the row update fails after we already moved the file,
-  //    move it back so storage_path still matches the on-disk location.
+  // 4. Apply.
   const { data: updated, error: updErr } = await admin
     .from("luts")
     .update(patch)
@@ -287,53 +271,10 @@ async function handleUpdate(
 
   if (updErr || !updated) {
     console.error("lut update failed", updErr);
-    if (fields.slug && fields.slug !== current.slug) {
-      // Compensate: move the file back to the old path.
-      const revert = await moveStorageObject(
-        admin,
-        nextStoragePath,
-        current.storage_path,
-      );
-      if (!revert.ok) {
-        console.error("storage revert failed", revert.error);
-      }
-    }
     return jsonResponse(req, 500, { error: "internal" });
   }
 
   return jsonResponse(req, 200, { ok: true, lut: updated });
-}
-
-async function moveStorageObject(
-  admin: ReturnType<typeof createClient>,
-  fromPath: string,
-  toPath: string,
-): Promise<{ ok: true } | { ok: false; error: string }> {
-  if (fromPath === toPath) return { ok: true };
-  const { data: dl, error: dlErr } = await admin.storage
-    .from(BUCKET_PUBLIC)
-    .download(fromPath);
-  if (dlErr || !dl) {
-    return { ok: false, error: `download: ${dlErr?.message ?? "empty"}` };
-  }
-  const { error: upErr } = await admin.storage
-    .from(BUCKET_PUBLIC)
-    .upload(toPath, dl, {
-      contentType: "application/octet-stream",
-      upsert: false,
-    });
-  if (upErr) {
-    return { ok: false, error: `upload: ${upErr.message}` };
-  }
-  const { error: rmErr } = await admin.storage
-    .from(BUCKET_PUBLIC)
-    .remove([fromPath]);
-  if (rmErr) {
-    // Best-effort: new file is live, old file is still around. Caller can
-    // decide whether to compensate further. Log only.
-    console.warn("old file remove failed after rename", fromPath, rmErr);
-  }
-  return { ok: true };
 }
 
 // ===== Delete ===============================================================

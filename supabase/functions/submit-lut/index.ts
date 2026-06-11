@@ -621,8 +621,14 @@ async function publishApprovedLut(opts: {
     return { ok: false, error: `download: ${dlErr?.message ?? "empty"}` };
   }
 
-  // Upload to public bucket
-  const destPath = `${slug}.cube`;
+  // Generate the row id up front and key the storage object on it. Pure
+  // ASCII so the S3-compatible storage layer never sees a path it
+  // rejects (slug is allowed to be Chinese; storage paths aren't).
+  // Renaming a slug later won't move the .cube file because the file
+  // is keyed by id, not slug.
+  const lutId = crypto.randomUUID();
+  const destPath = `${lutId}.cube`;
+
   const { error: upErr } = await admin.storage
     .from(BUCKET_PUBLIC)
     .upload(destPath, dl, {
@@ -633,10 +639,9 @@ async function publishApprovedLut(opts: {
     return { ok: false, error: `upload: ${upErr.message}` };
   }
 
-  // Insert into luts. id is auto-generated (gen_random_uuid()) so it stays
-  // independent of slug — renaming a slug later won't break the FK from
-  // submissions.published_lut_id or lut_download_requests.lut_id.
+  // Insert into luts with the same id we just uploaded under.
   const { data: lutRow, error: lutErr } = await admin.from("luts").insert({
+    id: lutId,
     slug,
     title: sub.title,
     description: sub.description,
