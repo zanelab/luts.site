@@ -27,8 +27,9 @@
  *   1. Preflight + method check
  *   2. Verify admin JWT
  *   3. Parse JSON body
- *   4. publishApprovedLut() — slugify, copy to public luts/, insert luts row,
- *      mark submissions approved with reviewed_by/at/published_lut_id
+ *   4. publishApprovedLut() — slugify, copy to public luts/, insert luts row
+ *      (id auto-generated as uuid), mark submissions approved with
+ *      reviewed_by/at/published_lut_id
  *
  * Reject pipeline:
  *   1. Same 1-3
@@ -414,7 +415,7 @@ function escapeHtml(s: string): string {
  *   1. Read submission row (must be status=pending)
  *   2. Slugify title; resolve collisions
  *   3. Download from private bucket, upload to public luts/{slug}.cube
- *   4. Insert into public.luts (id=slug, source_submission_id, published_by)
+ *   4. Insert into public.luts — id is auto-generated (uuid, not slug)
  *   5. Update submissions row: status=approved, reviewed_by/at, published_lut_id
  *
  * Returns { ok: true, lutId, slug } on success; { ok: false, error } on any
@@ -464,9 +465,10 @@ async function publishApprovedLut(opts: {
     return { ok: false, error: `upload: ${upErr.message}` };
   }
 
-  // Insert into luts
+  // Insert into luts. id is auto-generated (gen_random_uuid()) so it stays
+  // independent of slug — renaming a slug later won't break the FK from
+  // submissions.published_lut_id or lut_download_requests.lut_id.
   const { data: lutRow, error: lutErr } = await admin.from("luts").insert({
-    id: slug,
     slug,
     title: sub.title,
     description: sub.description,

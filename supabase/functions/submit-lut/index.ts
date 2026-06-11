@@ -633,9 +633,10 @@ async function publishApprovedLut(opts: {
     return { ok: false, error: `upload: ${upErr.message}` };
   }
 
-  // Insert into luts
+  // Insert into luts. id is auto-generated (gen_random_uuid()) so it stays
+  // independent of slug — renaming a slug later won't break the FK from
+  // submissions.published_lut_id or lut_download_requests.lut_id.
   const { data: lutRow, error: lutErr } = await admin.from("luts").insert({
-    id: slug,
     slug,
     title: sub.title,
     description: sub.description,

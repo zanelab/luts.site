@@ -289,7 +289,7 @@
             statusSpan.classList.add('approved');
           }
           var idP = els.success.querySelector('p:nth-of-type(2)');
-          if (idP) idP.innerHTML = 'luts.id = <code>' + data.lutId + '</code>（复制到 _luts/' + (data.slug || '?') + '.md 的 lutId: 字段）';
+          if (idP) idP.innerHTML = 'lutId: <code>' + data.lutId + '</code>（复制到 _luts/' + (data.slug || '?') + '.md 的 lutId: 字段）';
         }
       }
     } catch (err) {

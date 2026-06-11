@@ -246,7 +246,10 @@
         return;
       }
       var lutId = (r.data && r.data.lutId) || '?';
-      els.status.innerHTML = '已发布。luts.id = <code>' + escapeHtml(lutId) + '</code>（复制后写入 markdown）';
+      var slug = (r.data && r.data.slug) || '?';
+      els.status.innerHTML = '已发布。lutId: <code>' + escapeHtml(lutId) +
+        '</code>（复制到 <code>_luts/' + escapeHtml(slug) +
+        '.md</code> 的 <code>lutId:</code> 字段）';
       els.status.className = 'lut-admin-drawer-status ok';
       els.actions.hidden = true;
       els.reject.style.display = 'none';
