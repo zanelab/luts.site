@@ -47,3 +47,15 @@
 - 仅 admin 用，public 端（`/lut-list/`、`/blog/`）`base.html` 不加载 supabase-config，登录按钮不显示
 - Edge Function JWT 不变（OTP 产物与 magic link 一致）
 - 见 `openspec/changes/archive/admin-otp-login-20260611/`
+
+## 7. Admin 顶导登录入口（admin-nav-entry）
+- 顶导右侧、主菜单之后、`.auth-nav` 节点之前加「🔒 管理」静态文字链接，**所有页面始终可见**
+- 链接可见性与 supabase 加载状态无关，公开页零额外 JS 开销
+- 链接 href = `/admin/submissions/`，点击跳转
+- `_layouts/base.html` 在 `page.layout == 'admin'` 时输出 `data-auth-auto-open="true"`
+- `assets/js/auth-nav.js` 的 `refresh()` 在无 session 路径调 `autoOpenIfEligible()`，检查该标志 → `openModal()`
+- admin 布局未登录进入 → 自动弹模态；contribute / lut 布局未登录进入 → 不弹
+- admin 布局中退出登录 → 模态弹出引导重新登录；contribute / lut 布局退出 → 不弹
+- 已登录 admin 同时看到「🔒 管理」+ 头像双入口（互不冲突）
+- 移动端（<= 480px）链接可见、不被截断
+- 见 `openspec/changes/archive/admin-nav-entry-20260611/`

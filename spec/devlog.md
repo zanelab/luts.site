@@ -2,6 +2,30 @@
 
 > 按时间倒序记录，每次 archive 追加一节。
 
+## 2026-06-11 — Admin 顶导登录入口（admin-nav-entry）
+
+### 摘要
+顶导加「🔒 管理」文字链接，所有页面始终可见，公开页零额外 JS 开销。点击跳 `/admin/submissions/`，admin 布局检测无 session → 自动弹模态。contribute / lut 布局不弹。
+
+### 变更
+- `_includes/header.html` — 顶导 `.fr` 容器内插入 `<a class="auth-nav-entry" href="/admin/submissions/">🔒 管理</a>`
+- `_layouts/base.html` — `<body>` 在 `page.layout == 'admin'` 时输出 `data-auth-auto-open="true"`
+- `assets/js/auth-nav.js` — 新增 `autoOpenIfEligible()`，`refresh()` 在无 session 路径调
+- `_includes/components/auth-nav.html` — `.auth-nav-entry` CSS（discreet 风格、hover 下划线、focus-visible 描边）
+- `spec/requirements.md` / `spec/tasks.md` / `spec/devlog.md` — 同步
+
+### 关键决策
+- **布局信号机制**：原计划在 `admin.html` front matter 加 `body_data` 字段，base.html 渲染。但 Jekyll 嵌套 layout 的 front matter 不向父 layout 传播，base.html 模板里 `admin.html` 的字段不可见。改用 `{% if page.layout == 'admin' %}` 判定更直接，避免传染到其他 layout。spec / plan 同步更新
+- **公开页零开销**：`.auth-nav-entry` 是纯静态链接，不依赖 supabase 加载状态，公开页（`base.html`）继续不加载 supabase-config / supabase-js CDN
+
+### 验证
+- 28/28 实现类 checkbox + 6/8 验证 checkbox（5 公开页含链接、admin/submissions 含 data attr、contribute/luts 不含、build pass、回归、git status）
+- 10 项浏览器手测留给 staging
+
+### 链接
+- PR: https://github.com/zanelab/luts.site/pull/8
+- Commit: ed5c29d
+
 ## 2026-06-11 — Admin OTP 登录（admin-otp-login）
 
 ### 摘要
