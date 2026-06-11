@@ -43,9 +43,9 @@ make clean
 | `SUPABASE_URL` | 是 | `https://abcd1234.supabase.co` | Supabase 项目 URL（公开值） |
 | `SUPABASE_ANON_KEY` | 是 | `eyJhbGciOi...` | 前端使用的 anon key（**严禁填 service_role**） |
 | `SUPABASE_EDGE_FUNCTION` | 是 | `request-lut-download` | 已部署的下载 Edge Function 名称 |
-| `SUPABASE_SUBMIT_LUT_FUNCTION` | 否 | `submit-lut` | 投稿 Edge Function；未填则 `/contribute/` 提交按钮不可用 |
-| `SUPABASE_MODERATE_FUNCTION` | 否 | `moderate-submission` | 审批 Edge Function；未填则 `/admin/submissions/` 提交失败 |
 | `TURNSTILE_SITE_KEY` | 是 | `0x4AAAA...` | Cloudflare Turnstile 站点公钥，必须 `0x` 开头 |
+
+> 投稿用的 `submit-lut` 和审批用的 `moderate-submission` 这两个 Edge Function 名称在 JS 里硬编码（`assets/js/contribute.js` / `assets/js/admin-submissions.js` 顶部常量），不通过环境变量配置。
 
 ### 这些值从哪里取
 
@@ -73,7 +73,7 @@ LUT 详情页通过这四个 `window.*` 全局调用 Supabase Edge Function 和�
 - 进入 LUT 详情页 → 点击「下载 LUT」按钮 → 模态弹出时顶部显示「人机验证未配置」，提交按钮始终 disabled。
 - 列表页、博客、对比滑块等功能不受影响。
 - `/contribute/` 投稿页会显示 banner「人机验证未配置」，提交按钮 disabled。
-- `/admin/submissions/` 仅 admin 可见，但调用 Edge Function 会被前端拦截（`moderateFn === 'TODO'` 时页面显示配置错误）。
+- `/admin/submissions/` 仅 admin 可见，但调用 Edge Function 会被前端拦截（`SUPABASE_URL` / `SUPABASE_ANON_KEY` 缺失时页面显示配置错误）。
 
 ## 项目结构
 
@@ -229,8 +229,6 @@ Content-Type: application/json
 | `SUPABASE_URL` | `SUPABASE_URL` | 必填 |
 | `SUPABASE_ANON_KEY` | `SUPABASE_ANON_KEY` | 必填，**仍是 anon key**，不要填 service_role |
 | `SUPABASE_EDGE_FUNCTION` | `SUPABASE_EDGE_FUNCTION` | 必填，通常是 `request-lut-download` |
-| `SUPABASE_SUBMIT_LUT_FUNCTION` | `SUPABASE_SUBMIT_LUT_FUNCTION` | 选填，部署了 `submit-lut` 时填 `submit-lut` |
-| `SUPABASE_MODERATE_FUNCTION` | `SUPABASE_MODERATE_FUNCTION` | 选填，部署了 `moderate-submission` 时填 `moderate-submission` |
 | `TURNSTILE_SITE_KEY` | `TURNSTILE_SITE_KEY` | 必填，`0x` 开头 |
 
 > **为什么放在 Environment 而不是 Repository level？**

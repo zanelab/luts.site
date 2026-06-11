@@ -9,9 +9,12 @@
 
   var CFG = {
     supabaseUrl: window.LUTSITE_SUPABASE_URL || '',
-    anonKey: window.LUTSITE_SUPABASE_ANON_KEY || '',
-    moderateFn: window.LUTSITE_MODERATE_FUNCTION || 'moderate-submission'
+    anonKey: window.LUTSITE_SUPABASE_ANON_KEY || ''
   };
+
+  // Tied to supabase/functions/moderate-submission/index.ts. Not
+  // user-configurable; renaming the function requires updating this constant.
+  var MODERATE_FUNCTION = 'moderate-submission';
 
   var TABS = ['pending', 'approved', 'rejected'];
   var STATUS_LABELS = {
@@ -36,8 +39,7 @@
 
   function isConfigValid() {
     return /^https:\/\/[a-zA-Z0-9-]+\.supabase\.co/.test(CFG.supabaseUrl) &&
-      CFG.anonKey && CFG.anonKey !== 'TODO' &&
-      CFG.moderateFn && CFG.moderateFn !== 'TODO';
+      CFG.anonKey && CFG.anonKey !== 'TODO';
   }
 
   function escapeHtml(s) {
@@ -197,7 +199,7 @@
 
   async function moderate(payload) {
     var accessToken = state.session && state.session.access_token;
-    var url = CFG.supabaseUrl + '/functions/v1/' + CFG.moderateFn;
+    var url = CFG.supabaseUrl + '/functions/v1/' + MODERATE_FUNCTION;
     var res = await fetch(url, {
       method: 'POST',
       headers: {
