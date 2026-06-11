@@ -20,7 +20,9 @@
   // createClient calls on the same localStorage key make GoTrueClient
   // warn "Multiple GoTrueClient instances" and thrash the auth state —
   // SIGNED_IN gets re-emitted by the sibling client on every mutation.
-  if (!window.LUTSITE_SUPABASE) return;
+  // The init() guard below handles the missing-client case with a
+  // visible error banner; an early return here would silently leave
+  // the page stuck on "加载中…".
 
   var TABS = ['pending', 'approved', 'rejected'];
   var STATUS_LABELS = {
