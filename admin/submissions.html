@@ -62,63 +62,132 @@ description: 管理员审批队列
 </div>
 
 <style>
-  .lut-admin-loading, .lut-admin-denied, .lut-admin-error { padding: 16px 0; }
-  .lut-admin-denied-hint { margin-top: 16px; padding: 16px; background: #f6f6f6; border-radius: 4px; }
-  .lut-admin-denied-hint p { margin: 0 0 8px; }
+  .lut-admin-loading, .lut-admin-denied, .lut-admin-error { padding: 16px 0; color: rgba(255,255,255,0.7); }
+  .lut-admin-denied-hint { margin-top: 16px; padding: 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 4px; }
+  .lut-admin-denied-hint p { margin: 0 0 8px; color: rgba(255,255,255,0.7); }
+  .lut-admin-denied-hint code { color: #ebb85e; }
   .lut-admin-denied-hint pre {
-    margin: 0; padding: 12px 14px; background: #111; color: #f6f6f6;
+    margin: 0; padding: 12px 14px; background: #0a0a0a; color: #f6f6f6;
     border-radius: 4px; font-size: 13px; overflow-x: auto;
+    border: 1px solid rgba(255,255,255,0.06);
   }
-  .lut-admin-tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid #eee; }
+  .lut-admin-error button.btn-default {
+    background: rgba(255,255,255,0.06); color: #eee; border: 1px solid rgba(255,255,255,0.15);
+    padding: 8px 16px; cursor: pointer; border-radius: 4px; margin-top: 8px;
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .lut-admin-error button.btn-default:hover { background: #ebb85e; color: #95680d; border-color: #ebb85e; }
+
+  .lut-admin-tabs {
+    display: flex; gap: 4px; margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
   .lut-admin-tab {
-    background: none; border: 0; padding: 10px 16px; cursor: pointer;
-    font: inherit; color: #888; border-bottom: 2px solid transparent;
+    background: none; border: 0; padding: 10px 18px; cursor: pointer;
+    font-size: 12px; font-weight: 500; letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+    transition: color 0.2s ease, border-color 0.2s ease;
   }
-  .lut-admin-tab.active { color: #111; border-bottom-color: #111; font-weight: 600; }
+  .lut-admin-tab:hover { color: rgba(255,255,255,0.85); }
+  .lut-admin-tab.active { color: #ebb85e; border-bottom-color: #ebb85e; }
 
   .lut-admin-list { list-style: none; padding: 0; margin: 0; }
   .lut-admin-list li {
-    padding: 12px 16px; border: 1px solid #eee; border-radius: 4px;
+    padding: 14px 18px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px;
     margin-bottom: 8px; display: grid;
     grid-template-columns: 1fr auto auto auto; gap: 8px 16px; align-items: center;
+    transition: border-color 0.2s ease, background 0.2s ease;
   }
-  .lut-admin-list .title { font-weight: 600; }
-  .lut-admin-list .meta { font-size: 12px; color: #888; }
+  .lut-admin-list li:hover { border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.05); }
+  .lut-admin-list .title { font-weight: 600; color: #fff; }
+  .lut-admin-list .meta { font-size: 12px; color: rgba(255,255,255,0.5); }
   .lut-admin-list .status {
-    font-size: 11px; padding: 2px 8px; border-radius: 3px; font-weight: 600;
+    font-size: 11px; padding: 3px 10px; border-radius: 3px;
+    font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
   }
-  .lut-admin-list .status.pending { background: #fff3cd; color: #856404; }
-  .lut-admin-list .status.approved { background: #d4edda; color: #155724; }
-  .lut-admin-list .status.rejected { background: #f8d7da; color: #721c24; }
-  .lut-admin-list .detail-btn { background: #f3f3f3; border: 0; padding: 6px 12px; cursor: pointer; border-radius: 3px; }
+  .lut-admin-list .status.pending  { background: rgba(235,184,94,0.15); color: #ebb85e; }
+  .lut-admin-list .status.approved { background: rgba(80,200,120,0.15); color: #6ddc95; }
+  .lut-admin-list .status.rejected { background: rgba(255,90,90,0.15);  color: #ff8a8a; }
+  .lut-admin-list .detail-btn {
+    background: transparent; color: rgba(255,255,255,0.7);
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 6px 14px; cursor: pointer; border-radius: 3px;
+    font-size: 11px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+  .lut-admin-list .detail-btn:hover { background: #ebb85e; color: #95680d; border-color: #ebb85e; }
+  .lut-admin-empty { color: rgba(255,255,255,0.5); padding: 24px 0; text-align: center; }
 
   .lut-admin-drawer {
     position: fixed; top: 0; right: 0; bottom: 0; width: 480px; max-width: 100vw;
-    background: rgba(0,0,0,0.4); z-index: 1500;
+    background: rgba(0,0,0,0.65); z-index: 1500;
     display: flex; justify-content: flex-end;
   }
   .lut-admin-drawer[hidden] { display: none; }
   .lut-admin-drawer-card {
-    background: #fff; color: #222; width: 100%; padding: 24px;
+    background: #1a1a1a; color: #eee; width: 100%; padding: 24px;
     overflow-y: auto; position: relative; box-sizing: border-box;
+    border-left: 1px solid rgba(255,255,255,0.08);
+    box-shadow: -20px 0 60px rgba(0,0,0,0.5);
   }
   .lut-admin-drawer-close {
     position: absolute; top: 8px; right: 12px; background: none; border: 0;
-    font-size: 28px; line-height: 1; cursor: pointer; color: #888;
+    font-size: 28px; line-height: 1; cursor: pointer; color: rgba(255,255,255,0.6);
+    width: 36px; height: 36px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s ease, color 0.2s ease;
   }
-  .lut-admin-drawer-title { margin: 0 0 4px; font-size: 20px; }
-  .lut-admin-drawer-meta { color: #888; font-size: 12px; margin: 0 0 12px; }
-  .lut-admin-drawer-desc { margin: 0 0 12px; line-height: 1.5; }
-  .lut-admin-drawer-tags, .lut-admin-drawer-file, .lut-admin-drawer-link { font-size: 13px; color: #555; margin: 0 0 8px; }
-  .lut-admin-drawer-actions { display: flex; gap: 8px; margin: 16px 0; }
-  .lut-admin-reject { border-top: 1px solid #eee; padding-top: 16px; margin-top: 16px; }
-  .lut-admin-reject label { display: block; font-weight: 600; margin-bottom: 6px; }
+  .lut-admin-drawer-close:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .lut-admin-drawer-title { margin: 0 0 4px; font-size: 18px; font-weight: 600; color: #fff; }
+  .lut-admin-drawer-meta { color: rgba(255,255,255,0.5); font-size: 12px; margin: 0 0 16px; }
+  .lut-admin-drawer-desc { margin: 0 0 16px; line-height: 1.6; color: rgba(255,255,255,0.85); }
+  .lut-admin-drawer-tags, .lut-admin-drawer-file, .lut-admin-drawer-link { font-size: 13px; color: rgba(255,255,255,0.7); margin: 0 0 8px; }
+  .lut-admin-drawer-link a { color: #ebb85e; }
+  .lut-admin-drawer-link a:hover { text-decoration: underline; }
+  .lut-admin-drawer-actions { display: flex; gap: 8px; margin: 20px 0; }
+
+  .lut-admin .btn-primary {
+    width: 100%; padding: 13px 20px;
+    background: #ebb85e; color: #95680d;
+    font-size: 13px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+    border: none; border-radius: 4px; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .lut-admin .btn-primary:hover:not(:disabled) { background: #2d2d2d; color: #ebb85e; }
+  .lut-admin .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .lut-admin-reject {
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding-top: 16px; margin-top: 8px;
+  }
+  .lut-admin-reject label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255,255,255,0.7); }
   .lut-admin-reject textarea {
-    width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;
-    box-sizing: border-box; font: inherit;
+    width: 100%; padding: 12px 14px;
+    background: #0e0e0e; color: #fff;
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
+    box-sizing: border-box; font: inherit; font-size: 14px;
+    outline: none; transition: border-color 0.15s ease;
+    resize: vertical;
   }
-  .lut-admin-counter { font-size: 12px; color: #888; text-align: right; margin: 4px 0 8px; }
+  .lut-admin-reject textarea:focus { border-color: rgba(255,255,255,0.4); }
+  .lut-admin-counter { font-size: 11px; color: rgba(255,255,255,0.4); text-align: right; margin: 4px 0 12px; letter-spacing: 0.05em; }
+  .lut-admin .btn-danger {
+    width: 100%; padding: 13px 20px;
+    background: rgba(255,90,90,0.15); color: #ff8a8a;
+    font-size: 13px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+    border: 1px solid rgba(255,90,90,0.4); border-radius: 4px; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+  .lut-admin .btn-danger:hover:not(:disabled) { background: #ff5a5a; color: #fff; border-color: #ff5a5a; }
+  .lut-admin .btn-danger:disabled { opacity: 0.4; cursor: not-allowed; }
+
   .lut-admin-drawer-status { margin-top: 12px; font-size: 14px; min-height: 1.2em; }
-  .lut-admin-drawer-status.error { color: #c00; }
-  .lut-admin-drawer-status.ok { color: #080; }
+  .lut-admin-drawer-status.error { color: #ff8a8a; }
+  .lut-admin-drawer-status.ok { color: #6ddc95; }
 </style>
