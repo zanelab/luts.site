@@ -2,6 +2,33 @@
 
 > 按时间倒序记录，每次 archive 追加一节。
 
+## 2026-06-11 — Admin OTP 登录（admin-otp-login）
+
+### 摘要
+把顶导的 magic link 登录换成两步 OTP（邮箱 → 6 位数字 → `verifyOtp`）。同一台设备完成登录，无需切到邮箱点链接；首次登录即注册（`shouldCreateUser: true`）。
+
+### 变更
+- `assets/js/auth-nav.js`（新建）— ~370 行状态机，auto-advance / Backspace / 黏贴 6 位拆分 / 60s 倒计时 / 错误码 → 中文映射
+- `_includes/components/auth-nav.html` — 改为 markup only，去掉原 inline IIFE；两段 `.auth-nav-step`
+- `openspec/changes/admin-otp-login/{proposal,spec,plan}.md` — 提案 + 10 个 Scenario + 46 项 plan
+- `spec/requirements.md` / `spec/tasks.md` / `spec/devlog.md` — 同步更新
+
+### 关键决策
+- `detectSessionInUrl: false`（URL hash 不再带 session）
+- 6 个独立小框（`inputmode="numeric"`），mobile 友好且支持黏贴
+- Edge Function JWT 不变（OTP / magic link 产物一致）
+- 错误码一对一映射：`otp_expired` / `token_invalid` / `email_rate_limit_exceeded` / `over_email_send_rate_limit` / `network`
+- `base.html` 布局的公开页（`/`、`/lut-list/`、`/blog/`）不加载 supabase-config，登录按钮自动隐藏
+
+### 验证
+- 38/46 plan items ticked（35 实现类 + 3 build 验证），10 项浏览器手测留给 staging
+- `node --check` 通过、`make build` 退出 0
+- `_site/index.html` 等页面包含完整 markup
+
+### 链接
+- PR: https://github.com/zanelab/luts.site/pull/7
+- Commit: 3d2deb7
+
 ## 2026-06-11 — LUT 投稿与审核（lut-contribution）
 
 ### 摘要

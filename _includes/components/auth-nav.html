@@ -1,16 +1,15 @@
 <!--
   Auth-aware nav slot.
 
-  Renders into the .fr area next to the existing nav. The page must include
-  assets/js/supabase-config.js (window.LUTSITE_*) BEFORE this partial's
-  inline script runs. The script wires up:
+  Two-step OTP sign-in for admins:
+    1. Email step:  user types email → signInWithOtp (shouldCreateUser: true)
+    2. Code step:   6 independent digit inputs → verifyOtp (type: 'email')
 
-    - Sign in:  email prompt -> supabase.auth.signInWithOtp({ emailRedirectTo })
-    - User menu: avatar initial + dropdown with "退出"
-    - Admin menu: extra "⚙ 审批" entry when users.role === 'admin'
-
-  Only used for admin sign-in (the regular /contribute/ flow is anonymous).
-  The magic link redirects back to the current page.
+  The JS lives in assets/js/auth-nav.js. The page must include
+  assets/js/supabase-config.js (window.LUTSITE_*) BEFORE auth-nav.js runs.
+  supabase-js@2 loads deferred from head-scripts.html. auth-nav.js is
+  loaded with `defer` at the bottom of this partial so it runs after the
+  config globals are defined.
 -->
 <div class="auth-nav" id="auth-nav">
   <div class="auth-nav-loading" hidden>...</div>
@@ -36,12 +35,34 @@
   <div class="auth-nav-modal" id="auth-nav-modal" hidden>
     <div class="auth-nav-modal-card">
       <button type="button" class="auth-nav-modal-close" id="auth-nav-modal-close" aria-label="关闭">×</button>
-      <h3 class="auth-nav-modal-title">登录 / 注册</h3>
-      <p class="auth-nav-modal-help">输入邮箱，我们会发一封 magic link 给你，点击链接即可登录。</p>
-      <form id="auth-nav-form">
-        <input type="email" id="auth-nav-email" placeholder="your@email.com" required autocomplete="email" />
-        <button type="submit" class="btn btn-primary" id="auth-nav-submit">发送登录链接</button>
-      </form>
+      <h3 class="auth-nav-modal-title">管理员登录</h3>
+
+      <!-- Step 1: email -->
+      <div class="auth-nav-step" id="auth-nav-step-email">
+        <p class="auth-nav-modal-help">输入管理员邮箱，我们会发送 6 位数字验证码。</p>
+        <form id="auth-nav-email-form" novalidate>
+          <input type="email" id="auth-nav-email" placeholder="admin@yourdomain.com" required autocomplete="email" />
+          <button type="submit" class="btn btn-primary" id="auth-nav-email-submit">发送验证码</button>
+        </form>
+      </div>
+
+      <!-- Step 2: 6-digit code -->
+      <div class="auth-nav-step" id="auth-nav-step-code" hidden>
+        <p class="auth-nav-modal-help">已向 <strong id="auth-nav-code-email"></strong> 发送验证码，请输入邮件中的 6 位数字。</p>
+        <div class="auth-nav-code-row" id="auth-nav-code-row">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="auth-nav-code-input" aria-label="第 1 位" />
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="auth-nav-code-input" aria-label="第 2 位" />
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="auth-nav-code-input" aria-label="第 3 位" />
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="auth-nav-code-input" aria-label="第 4 位" />
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="auth-nav-code-input" aria-label="第 5 位" />
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="auth-nav-code-input" aria-label="第 6 位" />
+        </div>
+        <div class="auth-nav-code-actions">
+          <button type="button" class="auth-nav-link" id="auth-nav-resend" disabled>重新发送 (60s)</button>
+          <a href="#" class="auth-nav-link" id="auth-nav-change-email">换一个邮箱</a>
+        </div>
+      </div>
+
       <p class="auth-nav-modal-msg" id="auth-nav-modal-msg" aria-live="polite"></p>
     </div>
   </div>
@@ -84,7 +105,7 @@
   .auth-nav-modal[hidden] { display: none; }
   .auth-nav-modal-card {
     position: relative; background: #fff; color: #222;
-    padding: 24px; border-radius: 6px; max-width: 360px; width: 90%;
+    padding: 24px; border-radius: 6px; max-width: 380px; width: 92%;
   }
   .auth-nav-modal-close {
     position: absolute; top: 8px; right: 8px;
@@ -93,6 +114,7 @@
   }
   .auth-nav-modal-title { margin: 0 0 8px; font-size: 18px; }
   .auth-nav-modal-help { margin: 0 0 16px; color: #666; font-size: 14px; }
+  .auth-nav-step[hidden] { display: none; }
   .auth-nav-modal-card input[type="email"] {
     width: 100%; padding: 10px 12px; margin-bottom: 12px;
     border: 1px solid #ccc; border-radius: 4px; font-size: 14px;
@@ -101,154 +123,38 @@
   .auth-nav-modal-msg { margin: 8px 0 0; font-size: 13px; min-height: 1.2em; }
   .auth-nav-modal-msg.error { color: #c00; }
   .auth-nav-modal-msg.ok { color: #080; }
+
+  .auth-nav-code-row {
+    display: flex; gap: 8px; justify-content: center;
+    margin: 16px 0 12px;
+  }
+  .auth-nav-code-input {
+    width: 40px; height: 48px;
+    text-align: center; font-size: 22px; font-weight: 600;
+    border: 1px solid #ccc; border-radius: 4px;
+    background: #fafafa; box-sizing: border-box;
+  }
+  .auth-nav-code-input:focus {
+    outline: none; border-color: #ebb85e;
+    background: #fffdf6;
+  }
+  .auth-nav-code-actions {
+    display: flex; justify-content: space-between;
+    font-size: 13px; margin-top: 8px;
+  }
+  .auth-nav-link {
+    background: none; border: 0; padding: 0;
+    color: #2d2d2d; cursor: pointer; font: inherit;
+    text-decoration: none;
+  }
+  .auth-nav-link:hover { color: #ebb85e; text-decoration: underline; }
+  .auth-nav-link[disabled] {
+    color: #999; cursor: not-allowed; text-decoration: none;
+  }
+
+  @media (max-width: 480px) {
+    .auth-nav-code-input { width: 36px; height: 44px; font-size: 20px; }
+  }
 </style>
 
-<script>
-(function () {
-  'use strict';
-
-  var supabaseUrl = window.LUTSITE_SUPABASE_URL;
-  var anonKey = window.LUTSITE_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !anonKey || supabaseUrl === 'TODO' || anonKey === 'TODO') {
-    // Supabase not configured; hide the whole widget to avoid broken UX.
-    var el = document.getElementById('auth-nav');
-    if (el) el.style.display = 'none';
-    return;
-  }
-  if (!window.supabase || !window.supabase.createClient) {
-    // supabase-js not loaded; bail.
-    return;
-  }
-
-  var client = window.supabase.createClient(supabaseUrl, anonKey, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-  });
-
-  var signinBtn = document.getElementById('auth-nav-signin');
-  var userBox = document.querySelector('.auth-nav-user');
-  var avatarBtn = document.getElementById('auth-nav-avatar');
-  var initialEl = document.querySelector('.auth-nav-initial');
-  var dropdown = document.getElementById('auth-nav-dropdown');
-  var adminItem = document.querySelector('.auth-nav-admin');
-  var signoutBtn = document.getElementById('auth-nav-signout');
-  var modal = document.getElementById('auth-nav-modal');
-  var modalClose = document.getElementById('auth-nav-modal-close');
-  var modalForm = document.getElementById('auth-nav-form');
-  var modalEmail = document.getElementById('auth-nav-email');
-  var modalSubmit = document.getElementById('auth-nav-submit');
-  var modalMsg = document.getElementById('auth-nav-modal-msg');
-
-  function openModal() {
-    if (!modal) return;
-    modalMsg.textContent = '';
-    modalMsg.className = 'auth-nav-modal-msg';
-    modalEmail.value = '';
-    modal.hidden = false;
-    setTimeout(function () { modalEmail.focus(); }, 50);
-  }
-  function closeModal() { if (modal) modal.hidden = true; }
-
-  function setSignedOut() {
-    signinBtn.hidden = false;
-    userBox.hidden = true;
-  }
-  function setSignedIn(user, role) {
-    signinBtn.hidden = true;
-    userBox.hidden = false;
-    var email = (user && user.email) || '';
-    initialEl.textContent = email ? email[0].toUpperCase() : '?';
-    if (adminItem) adminItem.hidden = role !== 'admin';
-  }
-
-  async function loadRole(userId) {
-    if (!userId) return 'user';
-    try {
-      var r = await client.from('users').select('role').eq('id', userId).maybeSingle();
-      if (r.error || !r.data) return 'user';
-      return r.data.role || 'user';
-    } catch (_e) {
-      return 'user';
-    }
-  }
-
-  async function refresh() {
-    try {
-      var sess = await client.auth.getSession();
-      var session = sess && sess.data && sess.data.session;
-      if (!session) { setSignedOut(); return; }
-      var role = await loadRole(session.user.id);
-      setSignedIn(session.user, role);
-    } catch (err) {
-      console.warn('auth-nav refresh failed', err);
-      setSignedOut();
-    }
-  }
-
-  if (signinBtn) signinBtn.addEventListener('click', openModal);
-  if (modalClose) modalClose.addEventListener('click', closeModal);
-  if (modal) {
-    modal.addEventListener('click', function (e) {
-      if (e.target === modal) closeModal();
-    });
-  }
-  if (modalForm) {
-    modalForm.addEventListener('submit', async function (e) {
-      e.preventDefault();
-      var email = modalEmail.value.trim();
-      if (!email) return;
-      modalSubmit.disabled = true;
-      modalMsg.textContent = '发送中…';
-      modalMsg.className = 'auth-nav-modal-msg';
-      try {
-        var redirectTo = window.location.origin + window.location.pathname;
-        var r = await client.auth.signInWithOtp({
-          email: email,
-          options: { emailRedirectTo: redirectTo }
-        });
-        if (r.error) {
-          modalMsg.textContent = '发送失败：' + r.error.message;
-          modalMsg.className = 'auth-nav-modal-msg error';
-        } else {
-          modalMsg.textContent = '已发送，请查收邮箱。';
-          modalMsg.className = 'auth-nav-modal-msg ok';
-        }
-      } catch (err) {
-        modalMsg.textContent = '网络异常：' + (err && err.message || err);
-        modalMsg.className = 'auth-nav-modal-msg error';
-      } finally {
-        modalSubmit.disabled = false;
-      }
-    });
-  }
-
-  if (avatarBtn && dropdown) {
-    avatarBtn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      var open = !dropdown.hidden;
-      dropdown.hidden = open;
-      avatarBtn.setAttribute('aria-expanded', open ? 'false' : 'true');
-    });
-    document.addEventListener('click', function (e) {
-      if (!userBox.contains(e.target)) {
-        dropdown.hidden = true;
-        avatarBtn.setAttribute('aria-expanded', 'false');
-      }
-    });
-  }
-
-  if (signoutBtn) {
-    signoutBtn.addEventListener('click', async function () {
-      try { await client.auth.signOut(); } catch (_e) {}
-      dropdown.hidden = true;
-      setSignedOut();
-    });
-  }
-
-  client.auth.onAuthStateChange(function (_event, _session) {
-    refresh();
-  });
-
-  refresh();
-})();
-</script>
+<script src="{{ site.baseurl }}/assets/js/auth-nav.js" defer></script>
