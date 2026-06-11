@@ -11,7 +11,12 @@ description: 管理员审批队列
   <p class="lut-admin-loading" id="lut-admin-loading">加载中…</p>
 
   <div class="lut-admin-denied" id="lut-admin-denied" hidden>
-    <p>此页面仅对管理员开放。</p>
+    <p id="lut-admin-denied-msg">此页面仅对管理员开放。</p>
+    <div class="lut-admin-denied-hint" id="lut-admin-denied-hint" hidden>
+      <p>你已登录为 <code id="lut-admin-denied-email"></code>，但该账号尚未被授予管理员权限。</p>
+      <p>请在 Supabase Dashboard → SQL Editor 中执行：</p>
+      <pre><code id="lut-admin-denied-sql"></code></pre>
+    </div>
   </div>
 
   <div class="lut-admin-error" id="lut-admin-error" hidden>
@@ -58,6 +63,12 @@ description: 管理员审批队列
 
 <style>
   .lut-admin-loading, .lut-admin-denied, .lut-admin-error { padding: 16px 0; }
+  .lut-admin-denied-hint { margin-top: 16px; padding: 16px; background: #f6f6f6; border-radius: 4px; }
+  .lut-admin-denied-hint p { margin: 0 0 8px; }
+  .lut-admin-denied-hint pre {
+    margin: 0; padding: 12px 14px; background: #111; color: #f6f6f6;
+    border-radius: 4px; font-size: 13px; overflow-x: auto;
+  }
   .lut-admin-tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid #eee; }
   .lut-admin-tab {
     background: none; border: 0; padding: 10px 16px; cursor: pointer;

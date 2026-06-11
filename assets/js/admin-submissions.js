@@ -310,19 +310,45 @@
     state.isAdmin = await loadRole(state.session.user.id);
     if (!state.isAdmin) {
       hide('lut-admin-loading');
+      renderDenied(state.session.user && state.session.user.email);
       show('lut-admin-denied');
       return;
     }
     hide('lut-admin-denied');
+    hide('lut-admin-denied-hint');
     show('lut-admin-content');
     // pick initial tab from URL hash
     var hash = (window.location.hash || '').replace('#', '');
     setTab(hash && TABS.indexOf(hash) >= 0 ? hash : 'pending');
   }
 
+  function renderDenied(signedInEmail) {
+    if (signedInEmail) {
+      var msg = $('lut-admin-denied-msg');
+      var hint = $('lut-admin-denied-hint');
+      var emailEl = $('lut-admin-denied-email');
+      var sqlEl = $('lut-admin-denied-sql');
+      if (msg) msg.textContent = '你已登录，但此页面仅对管理员开放。';
+      if (emailEl) emailEl.textContent = signedInEmail;
+      if (sqlEl) {
+        sqlEl.textContent =
+          "update public.users\n" +
+          "set role = 'admin'\n" +
+          "where email = '" + signedInEmail.replace(/'/g, "''") + "';";
+      }
+      if (hint) hint.hidden = false;
+    } else {
+      var msg2 = $('lut-admin-denied-msg');
+      var hint2 = $('lut-admin-denied-hint');
+      if (msg2) msg2.textContent = '此页面仅对管理员开放。请先登录。';
+      if (hint2) hint2.hidden = true;
+    }
+  }
+
   async function refresh() {
     if (!state.client) return;
     hide('lut-admin-denied');
+    hide('lut-admin-denied-hint');
     hide('lut-admin-error');
     hide('lut-admin-content');
     show('lut-admin-loading');
@@ -330,6 +356,7 @@
     state.session = sess && sess.data && sess.data.session;
     if (!state.session) {
       hide('lut-admin-loading');
+      renderDenied(null);
       show('lut-admin-denied');
       return;
     }
