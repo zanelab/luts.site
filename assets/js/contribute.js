@@ -42,6 +42,8 @@
     client: null,
     isAdmin: false,
     turnstileToken: '',
+    turnstileWidgetId: null,
+    turnstileRenderAttempts: 0,
     submitting: false
   };
 
@@ -85,9 +87,18 @@
   }
 
   function renderTurnstile() {
-    if (!window.turnstile || !els.turnstile) return;
+    if (!els.turnstile) return;
     if (state.turnstileWidgetId !== null) {
       try { window.turnstile.reset(state.turnstileWidgetId); } catch (_e) {}
+      return;
+    }
+    if (!window.turnstile) {
+      if (state.turnstileRenderAttempts < 25) {
+        state.turnstileRenderAttempts++;
+        setTimeout(renderTurnstile, 200);
+      } else {
+        console.error('[lut-contribute] Turnstile script failed to load');
+      }
       return;
     }
     state.turnstileWidgetId = window.turnstile.render(els.turnstile, {
