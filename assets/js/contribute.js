@@ -286,11 +286,71 @@
     }
   }
 
+  function updateFileSelectedUI() {
+    var f = els.file && els.file.files && els.file.files[0];
+    if (!els.dropzoneEmpty || !els.dropzoneSelected) return;
+    if (!f) {
+      els.dropzoneEmpty.hidden = false;
+      els.dropzoneSelected.hidden = true;
+      return;
+    }
+    els.dropzoneEmpty.hidden = true;
+    els.dropzoneSelected.hidden = false;
+    if (els.fileName) els.fileName.textContent = f.name;
+    if (els.fileSize) els.fileSize.textContent = formatFileSize(f.size);
+  }
+
+  function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+  }
+
+  function bindFileDropzone() {
+    if (!els.file || !els.dropzone) return;
+    var dz = els.dropzone;
+    var dragDepth = 0;
+
+    dz.addEventListener('dragenter', function (e) {
+      if (!e.dataTransfer || !Array.prototype.some.call(e.dataTransfer.types || [], function (t) { return t === 'Files'; })) return;
+      e.preventDefault();
+      dragDepth++;
+      dz.classList.add('is-dragover');
+    });
+    dz.addEventListener('dragover', function (e) {
+      if (!e.dataTransfer) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+    });
+    dz.addEventListener('dragleave', function (e) {
+      e.preventDefault();
+      dragDepth = Math.max(0, dragDepth - 1);
+      if (dragDepth === 0) dz.classList.remove('is-dragover');
+    });
+    dz.addEventListener('drop', function (e) {
+      e.preventDefault();
+      dragDepth = 0;
+      dz.classList.remove('is-dragover');
+      var dt = e.dataTransfer;
+      if (!dt || !dt.files || !dt.files.length) return;
+      try {
+        els.file.files = dt.files;
+      } catch (_err) {
+        // Some browsers reject direct assignment; fall back to manual file.
+        return;
+      }
+      els.file.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    // Prevent the browser from opening the file when dropped outside the zone.
+    window.addEventListener('dragover', function (e) { e.preventDefault(); });
+    window.addEventListener('drop', function (e) { e.preventDefault(); });
+  }
+
   function bindEvents() {
     if (els.file) {
       els.file.addEventListener('change', function () {
         var f = els.file.files && els.file.files[0];
-        if (!f) { showFieldError('lut-contribute-file-err', null); validateForm(); return; }
+        if (!f) { showFieldError('lut-contribute-file-err', null); updateFileSelectedUI(); validateForm(); return; }
         if (f.size > MAX_FILE_SIZE) {
           showFieldError('lut-contribute-file-err', '文件不能超过 10MB');
         } else if (!f.name.toLowerCase().endsWith('.cube')) {
@@ -298,6 +358,7 @@
         } else {
           showFieldError('lut-contribute-file-err', null);
         }
+        updateFileSelectedUI();
         validateForm();
       });
     }
@@ -342,6 +403,11 @@
     els.form = $('lut-contribute-form');
     els.success = $('lut-contribute-success');
     els.file = $('lut-contribute-file');
+    els.dropzone = $('lut-contribute-dropzone');
+    els.dropzoneEmpty = els.dropzone ? els.dropzone.querySelector('.lut-contribute-dropzone-empty') : null;
+    els.dropzoneSelected = els.dropzone ? els.dropzone.querySelector('.lut-contribute-dropzone-selected') : null;
+    els.fileName = $('lut-contribute-file-name');
+    els.fileSize = $('lut-contribute-file-size');
     els.email = $('lut-contribute-email');
     els.title = $('lut-contribute-title');
     els.description = $('lut-contribute-description');
@@ -372,6 +438,7 @@
       refreshAdmin();
       if (isTurnstileConfigured()) renderTurnstile();
     });
+    bindFileDropzone();
     bindEvents();
     refreshAdmin();
     if (isTurnstileConfigured()) renderTurnstile();
