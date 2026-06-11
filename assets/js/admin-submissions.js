@@ -16,6 +16,12 @@
   // user-configurable; renaming the function requires updating this constant.
   var MODERATE_FUNCTION = 'moderate-submission';
 
+  // Use the page-wide client set up in supabase-client.js. Two separate
+  // createClient calls on the same localStorage key make GoTrueClient
+  // warn "Multiple GoTrueClient instances" and thrash the auth state —
+  // SIGNED_IN gets re-emitted by the sibling client on every mutation.
+  if (!window.LUTSITE_SUPABASE) return;
+
   var TABS = ['pending', 'approved', 'rejected'];
   var STATUS_LABELS = {
     pending: '待审核',
@@ -421,13 +427,11 @@
       showError('站点配置不完整');
       return;
     }
-    if (!window.supabase || !window.supabase.createClient) {
+    if (!window.LUTSITE_SUPABASE) {
       showError('Supabase 客户端未加载');
       return;
     }
-    state.client = window.supabase.createClient(CFG.supabaseUrl, CFG.anonKey, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-    });
+    state.client = window.LUTSITE_SUPABASE;
     // Filter events: INITIAL_SESSION fires on subscription (we already
     // trigger an explicit refresh() below, so skip it). TOKEN_REFRESHED
     // just renews the JWT — the user + role haven't changed, so don't

@@ -38,11 +38,9 @@
     if (el) el.style.display = 'none';
     return;
   }
-  if (!window.supabase || !window.supabase.createClient) return;
+  if (!window.LUTSITE_SUPABASE) return;
 
-  var client = window.supabase.createClient(supabaseUrl, anonKey, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
-  });
+  var client = window.LUTSITE_SUPABASE;
 
   var els = {};
   var state = {
