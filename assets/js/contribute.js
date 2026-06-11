@@ -243,7 +243,8 @@
     setStatus('投稿中…');
 
     var headers = {
-      'apikey': CFG.anonKey
+      'apikey': CFG.anonKey,
+      'Authorization': 'Bearer ' + CFG.anonKey
     };
     var accessToken = null;
     if (state.client) {
