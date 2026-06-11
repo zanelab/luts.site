@@ -17,9 +17,14 @@
 
 ## MODIFIED Requirements
 
-### Requirement: 顶导始终显示「🔒 管理」链接
+### Requirement: 顶导 / 侧边栏始终显示「🔒 管理」链接
 
-在所有页面顶导（主菜单 `<ul id="menu-navigation">` 之后、`.auth-nav` 节点之前）插入一个静态 `<a class="auth-nav-entry" href="/admin/submissions/">🔒 管理</a>`。
+由于本项目使用 `header_left_side` 侧边栏式布局（`style.css:2534` 把 `.site-header.with-side` 在桌面设为 `display: none`，仅手机显示），「🔒 管理」链接需要**两处**放置：
+
+1. **手机**：在 `.site-header` 顶导内（主菜单 `<ul id="menu-navigation">` 之后、`.auth-nav` 节点之前），`<a class="auth-nav-entry" href="/admin/submissions/">🔒 管理</a>`
+2. **桌面**：在 `.side-header` 侧边栏内（`.bottom` 容器、社交按钮下方），`<a class="auth-nav-entry auth-nav-entry--side" href="/admin/submissions/">🔒 管理</a>`
+
+两处由 CSS 互斥：`.side-header` 手机下隐藏（`mobile.css`），`.site-header.with-side` 桌面下隐藏（`style.css`）。
 
 #### Scenario: 公开页显示入口
 - Given 访客在 `/`、`/lut-list/`、`/blog/`（`base.html` 布局）
