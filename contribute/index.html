@@ -1,0 +1,107 @@
+---
+layout: contribute
+title: 投稿 LUT
+permalink: /contribute/
+description: 贡献一个 .cube 调色文件。审核通过后将出现在 LUT 列表。
+---
+
+<h1 class="h2 page-title">投稿 LUT</h1>
+
+<div class="lut-contribute" id="lut-contribute">
+  <p class="lut-contribute-intro">
+    欢迎贡献你的 .cube 调色文件。提交后会进入管理员审核队列，通过后会自动出现在
+    <a href="/lut-list/">映射表</a>，并在下载页面向所有人开放。
+  </p>
+
+  <div class="lut-contribute-banner lut-contribute-banner-error" id="lut-contribute-banner" hidden></div>
+
+  <!-- Logged-out state -->
+  <div class="lut-contribute-signedout" id="lut-contribute-signedout">
+    <p>投稿前请先登录。点击下方按钮，输入邮箱即可收到登录链接。</p>
+    <button type="button" class="btn btn-primary" id="lut-contribute-signin">登录后投稿</button>
+  </div>
+
+  <!-- Logged-in state -->
+  <div class="lut-contribute-signedin" id="lut-contribute-signedin" hidden>
+    <p class="lut-contribute-user">已登录为 <span id="lut-contribute-email"></span></p>
+
+    <form id="lut-contribute-form" novalidate>
+      <div class="lut-contribute-field">
+        <label for="lut-contribute-file">.cube 文件 <span class="req">*</span></label>
+        <input type="file" id="lut-contribute-file" name="file" accept=".cube" required />
+        <p class="lut-contribute-help">最大 10MB。.cube 是文本格式，含 3D 颜色查找表定义。</p>
+        <p class="lut-contribute-error" id="lut-contribute-file-err" hidden></p>
+      </div>
+
+      <div class="lut-contribute-field">
+        <label for="lut-contribute-title">标题 <span class="req">*</span></label>
+        <input type="text" id="lut-contribute-title" name="title" maxlength="80" required />
+        <p class="lut-contribute-counter"><span id="lut-contribute-title-count">0</span> / 80</p>
+        <p class="lut-contribute-error" id="lut-contribute-title-err" hidden></p>
+      </div>
+
+      <div class="lut-contribute-field">
+        <label for="lut-contribute-description">描述 <span class="req">*</span></label>
+        <textarea id="lut-contribute-description" name="description" maxlength="500" rows="4" required></textarea>
+        <p class="lut-contribute-counter"><span id="lut-contribute-desc-count">0</span> / 500</p>
+        <p class="lut-contribute-error" id="lut-contribute-desc-err" hidden></p>
+      </div>
+
+      <div class="lut-contribute-field">
+        <label for="lut-contribute-tags">标签</label>
+        <input type="text" id="lut-contribute-tags" name="tags" placeholder="逗号分隔，最多 5 个，每项 ≤ 16 字" />
+        <p class="lut-contribute-help">例如：胶片感, 暖色调, 城市夜景</p>
+        <p class="lut-contribute-error" id="lut-contribute-tags-err" hidden></p>
+      </div>
+
+      <div class="lut-contribute-field lut-contribute-direct" id="lut-contribute-direct-wrap" hidden>
+        <label>
+          <input type="checkbox" id="lut-contribute-direct" />
+          直接发布（仅管理员，跳过审批队列）
+        </label>
+      </div>
+
+      <div class="lut-contribute-field">
+        <label>人机验证 <span class="req">*</span></label>
+        <div class="lut-contribute-turnstile" id="lut-contribute-turnstile"></div>
+        <p class="lut-contribute-error" id="lut-contribute-turnstile-err" hidden></p>
+      </div>
+
+      <div class="lut-contribute-actions">
+        <button type="submit" class="btn btn-primary" id="lut-contribute-submit" disabled>投稿</button>
+        <span class="lut-contribute-status" id="lut-contribute-status" aria-live="polite"></span>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+  .lut-contribute { max-width: 720px; }
+  .lut-contribute-intro { color: #555; margin-bottom: 24px; }
+  .lut-contribute-banner {
+    padding: 12px 16px; border-radius: 4px; margin-bottom: 20px;
+  }
+  .lut-contribute-banner-error { background: #fde7e7; color: #a00; }
+  .lut-contribute-banner-warn { background: #fff3cd; color: #856404; }
+  .lut-contribute-signedout {
+    padding: 24px; background: #f8f8f8; border-radius: 4px; text-align: center;
+  }
+  .lut-contribute-user { color: #555; margin-bottom: 16px; }
+  .lut-contribute-field { margin-bottom: 20px; }
+  .lut-contribute-field label { display: block; font-weight: 600; margin-bottom: 6px; }
+  .lut-contribute-field .req { color: #c00; }
+  .lut-contribute-field input[type="text"],
+  .lut-contribute-field input[type="email"],
+  .lut-contribute-field textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid #ccc;
+    border-radius: 4px; font: inherit; box-sizing: border-box;
+  }
+  .lut-contribute-field input[type="file"] { font: inherit; }
+  .lut-contribute-counter { font-size: 12px; color: #888; margin: 4px 0 0; text-align: right; }
+  .lut-contribute-help { font-size: 12px; color: #888; margin: 4px 0 0; }
+  .lut-contribute-error { color: #c00; font-size: 13px; margin: 6px 0 0; }
+  .lut-contribute-actions { display: flex; align-items: center; gap: 16px; margin-top: 24px; }
+  .lut-contribute-status { color: #555; font-size: 14px; }
+  .lut-contribute-status.error { color: #c00; }
+  .lut-contribute-status.ok { color: #080; }
+</style>

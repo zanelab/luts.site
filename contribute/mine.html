@@ -1,0 +1,47 @@
+---
+layout: contribute
+title: 我的投稿
+permalink: /contribute/mine/
+description: 你提交过的所有 LUT 及当前状态。
+---
+
+<h1 class="h2 page-title">我的投稿</h1>
+
+<div class="lut-mine" id="lut-mine">
+  <p class="lut-mine-loading" id="lut-mine-loading">加载中…</p>
+
+  <div class="lut-mine-signedout" id="lut-mine-signedout" hidden>
+    <p>请先<a href="#" id="lut-mine-signin">登录</a>后查看你的投稿历史。</p>
+  </div>
+
+  <div class="lut-mine-error" id="lut-mine-error" hidden>
+    <p class="lut-mine-error-msg" id="lut-mine-error-msg"></p>
+    <button type="button" class="btn btn-default" id="lut-mine-retry">重试</button>
+  </div>
+
+  <div class="lut-mine-list" id="lut-mine-list" hidden></div>
+
+  <div class="lut-mine-empty" id="lut-mine-empty" hidden>
+    <p>你还没有投稿，<a href="/contribute/">立即投稿</a>。</p>
+  </div>
+</div>
+
+<style>
+  .lut-mine-list { display: grid; gap: 12px; }
+  .lut-mine-item {
+    background: #f8f8f8; padding: 16px; border-radius: 4px;
+    display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; align-items: start;
+  }
+  .lut-mine-item-title { font-weight: 600; font-size: 16px; margin: 0; }
+  .lut-mine-item-meta { font-size: 12px; color: #888; margin: 4px 0 0; }
+  .lut-mine-item-desc { grid-column: 1 / -1; color: #555; margin: 6px 0 0; font-size: 14px; }
+  .lut-mine-item-tags { grid-column: 1 / -1; font-size: 12px; color: #888; }
+  .lut-mine-item-reason { grid-column: 1 / -1; color: #a00; font-size: 13px; }
+  .lut-mine-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 3px;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .lut-mine-badge.pending { background: #fff3cd; color: #856404; }
+  .lut-mine-badge.approved { background: #d4edda; color: #155724; }
+  .lut-mine-badge.rejected { background: #f8d7da; color: #721c24; }
+</style>
