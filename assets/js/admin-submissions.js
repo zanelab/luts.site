@@ -28,7 +28,8 @@
   var state = {
     client: null,
     session: null,
-    isAdmin: false,
+    isAdmin: null,         // null = not loaded yet; true/false = cached
+    isAdminUserId: null,   // cache key — invalidate on user change
     tab: 'pending',
     list: [],
     current: null,
@@ -298,11 +299,25 @@
 
   async function loadRole(userId) {
     if (!userId || !state.client) return false;
+    // Cache hit: role for this user has already been resolved this session.
+    // Re-querying on every refresh is the main reason users?select=role
+    // showed up dozens of times in DevTools.
+    if (state.isAdminUserId === userId && state.isAdmin !== null) return state.isAdmin;
     try {
       var r = await state.client.from('users').select('role').eq('id', userId).maybeSingle();
-      if (r.error || !r.data) return false;
-      return r.data.role === 'admin';
-    } catch (_e) { return false; }
+      if (r.error || !r.data) {
+        state.isAdmin = false;
+        state.isAdminUserId = userId;
+        return false;
+      }
+      state.isAdmin = r.data.role === 'admin';
+      state.isAdminUserId = userId;
+      return state.isAdmin;
+    } catch (_e) {
+      state.isAdmin = false;
+      state.isAdminUserId = userId;
+      return false;
+    }
   }
 
   async function start() {
@@ -355,6 +370,10 @@
     var sess = await state.client.auth.getSession();
     state.session = sess && sess.data && sess.data.session;
     if (!state.session) {
+      // Sign out (or never signed in) — invalidate role cache so the next
+      // sign-in starts from a clean slate.
+      state.isAdmin = null;
+      state.isAdminUserId = null;
       hide('lut-admin-loading');
       renderDenied(null);
       show('lut-admin-denied');
@@ -400,7 +419,15 @@
     state.client = window.supabase.createClient(CFG.supabaseUrl, CFG.anonKey, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
-    state.client.auth.onAuthStateChange(function () { refresh(); });
+    // Filter events: INITIAL_SESSION fires on subscription (we already
+    // trigger an explicit refresh() below, so skip it). TOKEN_REFRESHED
+    // just renews the JWT — the user + role haven't changed, so don't
+    // re-query. Only react to real sign-in / sign-out / user updates.
+    state.client.auth.onAuthStateChange(function (event) {
+      if (event === 'INITIAL_SESSION') return;
+      if (event === 'TOKEN_REFRESHED') return;
+      refresh();
+    });
     bindEvents();
     refresh();
   }
