@@ -242,7 +242,9 @@
     if (els.submit) els.submit.disabled = true;
     setStatus('投稿中…');
 
-    var headers = {};
+    var headers = {
+      'apikey': CFG.anonKey
+    };
     var accessToken = null;
     if (state.client) {
       try {
