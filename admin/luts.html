@@ -27,6 +27,8 @@ description: 查看、编辑、删除已发布的 LUT
   <div class="lut-admin-content" id="lut-admin-content" hidden>
     <p class="lut-admin-hint">每条 LUT 的 uuid 需要复制到 <code>_luts/&lt;slug&gt;.md</code> 的 <code>lutId:</code> 字段。</p>
 
+    <p class="lut-admin-list-status" id="lut-admin-list-status" aria-live="polite"></p>
+
     <ul class="lut-admin-list lut-admin-list--luts" id="lut-admin-list"></ul>
     <p class="lut-admin-empty" id="lut-admin-empty" hidden>暂无</p>
   </div>
@@ -143,6 +145,23 @@ description: 查看、编辑、删除已发布的 LUT
   }
   .lut-admin-list--luts .copy-btn:hover { background: rgba(235,184,94,0.15); color: #ebb85e; border-color: #ebb85e; }
   .lut-admin-list--luts .copy-btn.copied { background: rgba(80,200,120,0.18); color: #6ddc95; border-color: #6ddc95; }
+
+  .lut-admin-list--luts li.is-deleting {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  .lut-admin-list--luts .action-btn:disabled,
+  .lut-admin-list--luts .copy-btn:disabled {
+    cursor: not-allowed; opacity: 0.6;
+  }
+
+  .lut-admin-list-status {
+    margin: 0 0 12px; min-height: 1.2em;
+    font-size: 13px; color: rgba(255,255,255,0.7);
+  }
+  .lut-admin-list-status:empty { display: none; }
+  .lut-admin-list-status.error { color: #ff8a8a; }
+  .lut-admin-list-status.ok { color: #6ddc95; }
 
   .lut-admin-empty { color: rgba(255,255,255,0.5); padding: 24px 0; text-align: center; }
 

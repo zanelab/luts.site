@@ -33,7 +33,8 @@
     isAdminUserId: null,
     list: [],
     current: null,
-    busy: false
+    busy: false,
+    deletingId: null
   };
 
   function $(id) { return document.getElementById(id); }
@@ -118,7 +119,7 @@
     if (!row) return;
     var action = btn.dataset.action;
     if (action === 'edit') return openDrawer(row);
-    if (action === 'delete') return confirmDelete(row);
+    if (action === 'delete') return confirmDelete(row, btn);
     if (action === 'copy') return copyUuid(btn, row.id);
   }
 
@@ -301,12 +302,40 @@
     els.status.className = 'lut-admin-drawer-status' + (kind ? ' ' + kind : '');
   }
 
-  async function confirmDelete(row) {
+  function setListStatus(text, kind) {
+    if (!els.listStatus) return;
+    els.listStatus.textContent = text || '';
+    els.listStatus.className = 'lut-admin-list-status' + (kind ? ' ' + kind : '');
+  }
+
+  async function confirmDelete(row, btn) {
+    if (state.busy) return;
     var msg = '确认删除 LUT「' + (row.title || row.slug) + '」？\n' +
       '将同时删除数据库记录和 storage 中的 .cube 文件。\n' +
       '此操作不可撤销。';
     if (!window.confirm(msg)) return;
+
     state.busy = true;
+    state.deletingId = row.id;
+
+    // Lock the row in place. loadList() will re-render on success and
+    // drop the row entirely; on failure we revert the in-place edits.
+    var li = btn && btn.closest('li');
+    var rowButtons = li
+      ? Array.prototype.slice.call(li.querySelectorAll('button'))
+      : [];
+    var origBtnText = btn ? btn.textContent : null;
+    if (li) li.classList.add('is-deleting');
+    for (var i = 0; i < rowButtons.length; i++) rowButtons[i].disabled = true;
+    if (btn) btn.textContent = '删除中…';
+    setListStatus('正在删除「' + (row.title || row.slug) + '」…');
+
+    var revertRow = function () {
+      if (li) li.classList.remove('is-deleting');
+      for (var j = 0; j < rowButtons.length; j++) rowButtons[j].disabled = false;
+      if (btn && origBtnText != null) btn.textContent = origBtnText;
+    };
+
     try {
       var r = await callManage({
         action: 'delete',
@@ -315,14 +344,22 @@
       });
       if (!r.ok) {
         var code = (r.data && r.data.error) || 'internal';
+        setListStatus('删除失败：' + code, 'error');
         window.alert('删除失败：' + code);
+        revertRow();
         return;
       }
+      setListStatus('已删除「' + (row.title || row.slug) + '」', 'ok');
+      // Re-render so the row disappears; auto-clear the status after a beat.
       loadList();
+      setTimeout(function () { setListStatus('', ''); }, 2500);
     } catch (err) {
+      setListStatus('网络异常', 'error');
       window.alert('网络异常');
+      revertRow();
     } finally {
       state.busy = false;
+      state.deletingId = null;
     }
   }
 
@@ -433,6 +470,7 @@
     els.retry = $('lut-admin-retry');
     els.content = $('lut-admin-content');
     els.list = $('lut-admin-list');
+    els.listStatus = $('lut-admin-list-status');
     els.empty = $('lut-admin-empty');
     els.drawer = $('lut-admin-drawer');
     els.close = $('lut-admin-drawer-close');
