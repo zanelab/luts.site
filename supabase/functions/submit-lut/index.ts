@@ -34,7 +34,8 @@
  *      Anon submissions skip this step; direct_publish=true requires admin.
  *   4. Validate fields + file (.cube, <=10MB, text-like content)
  *   5. Verify Cloudflare Turnstile token
- *   6. Rate limit by form email (5/24h, rolling, fail-open)
+ *   6. Rate limit by form email (5/24h, rolling, fail-open).
+ *      Admins bypass — see step 3.
  *   7. Upload to lut-submissions/{user_id_or_anonymous}/{submission_id}.cube
  *   8. Insert submissions row (user_id=NULL when anonymous)
  *   9. If direct_publish=true: publishApprovedLut() (same path as approve)
@@ -201,19 +202,24 @@ Deno.serve(async (req) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  // -- Step 7: rate limit (per email, rolling 24h, from form field)
-  const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const { count: recentCount, error: rlErr } = await admin
-    .from("submissions")
-    .select("id", { count: "exact", head: true })
-    .eq("user_email", emailTrim)
-    .gte("created_at", since24h);
+  // -- Step 7: rate limit (per email, rolling 24h, from form field).
+  // Admins bypass — they're already gated by JWT and direct_publish needs
+  // a different cap anyway (5/day is fine for contributors, brutal for
+  // admins backfilling the catalogue).
+  if (user?.role !== "admin") {
+    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { count: recentCount, error: rlErr } = await admin
+      .from("submissions")
+      .select("id", { count: "exact", head: true })
+      .eq("user_email", emailTrim)
+      .gte("created_at", since24h);
 
-  if (rlErr) {
-    console.error("rate-limit lookup failed", rlErr);
-    // fail open: infra glitch shouldn't block legit users
-  } else if ((recentCount ?? 0) >= RATE_LIMIT_EMAIL_PER_DAY) {
-    return jsonResponse(req, 429, { error: "rate_limited" });
+    if (rlErr) {
+      console.error("rate-limit lookup failed", rlErr);
+      // fail open: infra glitch shouldn't block legit users
+    } else if ((recentCount ?? 0) >= RATE_LIMIT_EMAIL_PER_DAY) {
+      return jsonResponse(req, 429, { error: "rate_limited" });
+    }
   }
 
   // -- Step 8: upload to private bucket
