@@ -1,7 +1,7 @@
 ---
 layout: lut
 title: 阳光效果化调色 LUT
-date: 2026-06-10
+date: 2026-06-10 10:00:00 +0800
 lutId: ce32a1f0-3009-4ef6-9011-58a7b6d93e86
 excerpt: "其核心作用是模拟阳光明媚、温暖明亮的视觉氛围。常用于“黄金时刻”（日出/日落）、夏日午后、海滩等场景，营造阳光灿烂、温暖怀旧的观感。"
 beforeImg: /assets/images/luts/sun-shine/before.jpg

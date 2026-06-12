@@ -1,7 +1,7 @@
 ---
 layout: lut
 title: 强力风格化调色 LUT
-date: 2026-06-12
+date: 2026-06-12 11:00:00 +0800
 lutId: edb06158-b5f6-4de4-a0b4-a8d1b96549e0
 excerpt: "这是一个 强力风格化调色 LUT，其输出数值范围超出标准 [0,1] 区间（包含负值及大于 1 的值），且 RGB 通道之间存在明显的非线性偏移。强烈的色调分离和饱和度变化，适合制造视觉冲击力。"
 beforeImg: /assets/images/luts/powerful-tonning/before.jpg

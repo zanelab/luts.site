@@ -38,7 +38,8 @@ body_class: wp-singular page-template page-template-template-landing page-templa
               <div class="blog-block">
                 <div class="blog-items row blog-type-horizontal blog-luts-list load-wrap" id="lut-list-container">
 
-                  {% for lut in site.luts reversed limit: 4 %}
+                  {% assign luts_desc = site.luts | reverse %}
+                  {% for lut in luts_desc limit: 4 %}
                   <article class="blog-item col-xs-12" data-index="{{ forloop.index0 }}" data-tags="{{ lut.tags | join: ',' | default: '' }}">
                     <div class="wrap">
                       <div class="img comparison-slider" data-before="{{ lut.beforeImg }}" data-after="{{ lut.afterImg }}">
@@ -337,9 +338,9 @@ body_class: wp-singular page-template page-template-template-landing page-templa
       setTimeout(function() {
         var $newItems = $();
 
-        {% for lut in site.luts reversed %}
+        {% for lut in luts_desc %}
         {% if forloop.index0 >= 4 %}
-        if ({{ forloop.index0 }} < offset + lutsPerPage && {{ forloop.index0 }} < total) {
+        if ({{ forloop.index0 }} >= offset && {{ forloop.index0 }} < offset + lutsPerPage && {{ forloop.index0 }} < total) {
           var html = '<article class="blog-item col-xs-12" data-index="{{ forloop.index0 }}" data-tags="{% if lut.tags %}{{ lut.tags | join: ',' | escape }}{% endif %}">' +
             '<div class="wrap">' +
             '<div class="img comparison-slider" data-before="{{ lut.beforeImg }}" data-after="{{ lut.afterImg }}">' +

@@ -1,7 +1,7 @@
 ---
 layout: lut
 title: 压缩、限制或扭曲某些颜色范围的调色 LUT
-date: 2026-06-12
+date: 2026-06-12 08:00:00 +0800
 lutId: 2806401c-88dd-42c5-9e95-f52bb2b86db0
 excerpt: "这是一个压缩、限制或扭曲某些颜色范围的调色 LUT，创造特定的电影感、复古或风格化色调，限制色域（例如将广色域内容映射到较小色域），添加特殊的色彩偏移（阴影偏青、高光偏暖等）"
 beforeImg: /assets/images/luts/limit-color/before.jpg
