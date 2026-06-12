@@ -20,50 +20,41 @@ sections:
     camera_image: /assets/images/2018/06/camera-img.png
     content: "我发现手机摄影最大的痛点不是设备，而是色彩。网上其实有很多免费的LUT资源，但分散在各个论坛、网盘、外文网站，质量参差不齐，很多根本不适配手机软件，套上去要么过曝、要么肤色奇怪。于是我花大量时间从各个渠道收集、筛选、实测，只留下那些真正适合手机视频的.cube文件，并按风格分类。同时，我会为每一款LUT配上详细的导入教程和微调建议 —— 从剪映到VN，从LumaFusion到Lightroom Mobile。这个网站的定位很简单：做你手机调色的“精选超市 + 说明书”。你不用再去海量资源里大海捞针，也不用自己摸索怎么用。所有LUT和教程，我整理好了。"
     button_text: "跟我一起玩"
-    button_url: "#"
+    button_url: "/lut-list/"
 
   - type: portfolio
     title: "我的作品集"
     items:
-      - title: "Being in Your Control"
-        categories: ["Creative", "Portrait"]
-        project_url: "index.html?p=239.html"
+      - title: "阳光效果化调色 LUT"
+        categories: ["暖色调", "阳光效果", "户外风格"]
+        project_url: "/luts/sun-shine.html"
         images:
-          - /assets/images/2018/06/img8-1024x686.jpg
-          - /assets/images/2018/06/img10-1024x683.jpg
-          - /assets/images/2018/06/img9-1024x686.jpg
-          - /assets/images/2018/06/img7-1024x686.jpg
-      - title: "Wondering How To Make Your work Rock?"
-        categories: ["Nature"]
-        project_url: "index.html?p=240.html"
+          - /assets/images/luts/sun-shine/before.jpg
+          - /assets/images/luts/sun-shine/after.jpg
+      - title: "强力风格化调色 LUT"
+        categories: ["强力调色", "创意风格", "暖色调"]
+        project_url: "/luts/powerful-tonning.html"
         images:
-          - /assets/images/2018/06/img2-1024x1024.jpg
-          - /assets/images/2018/06/img5-1024x684.jpg
-          - /assets/images/2018/06/img4-1024x1024.jpg
-          - /assets/images/2018/06/img3-1024x684.jpg
-          - /assets/images/2018/06/img6-1024x733.jpg
-          - /assets/images/2018/06/img8-1024x686.jpg
-      # - title: "13 Myths About Room"
-      #   categories: ["Portrait"]
-      #   project_url: "index.html?p=241.html"
-      #   images:
-      #     - /assets/images/2018/06/img3-1024x684.jpg
-      #     - /assets/images/2018/06/img5-1024x684.jpg
-      #     - /assets/images/2018/06/img4-1024x1024.jpg
-      # - title: "10 Warning Signs Of Your phone Demise"
-      #   categories: ["Creative"]
-      #   project_url: "index.html?p=242.html"
-      #   images:
-      #     - /assets/images/2018/06/img1-1024x1024.jpg
-      # - title: "Here Is A Method That Is Helping foot"
-      #   categories: ["Fashion", "Other"]
-      #   project_url: "index.html?p=243.html"
-      #   images:
-      #     - /assets/images/2018/06/img5-1024x684.jpg
-      #     - /assets/images/2018/06/img4-1024x1024.jpg
-      #     - /assets/images/2018/06/img3-1024x684.jpg
-      #     - /assets/images/2018/06/img8-1024x686.jpg
-      #     - /assets/images/2018/06/img6-1024x733.jpg
+          - /assets/images/luts/powerful-tonning/before.jpg
+          - /assets/images/luts/powerful-tonning/after.jpg
+      - title: "压缩、限制或扭曲某些颜色范围的调色 LUT"
+        categories: ["色彩限制", "电影感", "后期制作"]
+        project_url: "/luts/limit-color.html"
+        images:
+          - /assets/images/luts/limit-color/before.jpg
+          - /assets/images/luts/limit-color/after.jpg
+      - title: "冷调、褪色且略带“烧灼”感的复古电影外观 LUT"
+        categories: ["后期调色", "颜色分级", "色彩风格"]
+        project_url: "/luts/depth-of-field.html"
+        images:
+          - /assets/images/luts/depth-of-field/before.jpg
+          - /assets/images/luts/depth-of-field/after.jpg
+      - title: "强化暗影的调色 LUT"
+        categories: ["阴影提升", "暖色调倾向", "柔和过渡"]
+        project_url: "/luts/boost-shadow.html"
+        images:
+          - /assets/images/luts/boost-shadow/before.jpg
+          - /assets/images/luts/boost-shadow/after.jpg
     view_all_url: "lut-list/"
     view_all_text: "查看所有颜色映射表"
 
@@ -88,7 +79,7 @@ sections:
     background_image: /assets/images/2018/06/bg-about-me.jpg
     greeting: "很高兴见到你"
     name: "Zane Deng"
-    bio: "本站分享的LUT预设均收集自公开网络渠道（如免费资源站、作者公开分享等），部分无法追溯原作者。如果你发现你的作品被收录且不希望被分享，请联系我，我会立即下架。我的初衷仅是整理、测试与教学，不售卖任何资源。"
+    bio: "本站分享的LUT预设均收集自公开网络渠道（如免费资源站、作者公开分享等），部分无法追溯原作者。如果你发现你的作品被收录且不希望被分享，请联系我，我会立即下架。我的初衷仅是整理、测试与教学。"
     stats:
       - icon: "beautiful-camera-lens-hood"
         count: "132"
