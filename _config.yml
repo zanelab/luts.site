@@ -25,6 +25,7 @@ collections:
     output: true
   luts:
     output: true
+    sort_by: date
 
 defaults:
   - scope:
