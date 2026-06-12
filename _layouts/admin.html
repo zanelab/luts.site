@@ -17,5 +17,6 @@ body_class: lut-admin-page wp-singular page-template page-template-template-land
   {% include footer.html %}
 </div>
 
-<script src="{{ site.baseurl }}/assets/js/admin-submissions.js" defer></script>
-<script src="{{ site.baseurl }}/assets/js/admin-luts.js" defer></script>
+{% if page.admin_script %}
+<script src="{{ site.baseurl }}/assets/js/{{ page.admin_script }}.js" defer></script>
+{% endif %}
