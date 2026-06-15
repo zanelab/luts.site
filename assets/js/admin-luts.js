@@ -504,12 +504,21 @@
       }
       setStatus('已保存', 'ok');
 
-      // Update local state so subsequent edits / list badge see new values.
-      var saved = {
+      // Trust the server's response, not our request body. A stale
+      // manage-lut (deployed before PR #9) silently drops paid fields
+      // and returns ok=true; using the returned row keeps the UI honest
+      // with what's actually in the DB.
+      var serverRow = r.data && r.data.lut ? r.data.lut : {
         paid: paidIn.paid,
         price_cents: priceCents,
         afdian_sku_id: skuVal,
         afdian_order_url: urlVal
+      };
+      var saved = {
+        paid: !!serverRow.paid,
+        price_cents: typeof serverRow.price_cents === 'number' ? serverRow.price_cents : null,
+        afdian_sku_id: serverRow.afdian_sku_id || null,
+        afdian_order_url: serverRow.afdian_order_url || null
       };
       Object.assign(state.current, saved);
       var idx = state.list.findIndex(function (x) { return x.id === state.current.id; });
