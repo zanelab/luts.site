@@ -1,12 +1,15 @@
-.PHONY: build serve clean config
+.PHONY: build serve clean config validate-luts
 
 config:
 	@./script/build-config.sh
 
-build: config
+validate-luts:
+	@./script/validate-luts.sh
+
+build: config validate-luts
 	@bundle exec jekyll build
 
-serve: config
+serve: config validate-luts
 	@bundle exec jekyll serve --livereload
 
 clean:

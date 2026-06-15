@@ -61,3 +61,20 @@
 - admin 布局中退出登录 → 模态弹出引导重新登录；contribute / lut 布局退出 → 不弹
 - 已登录 admin 同时看到「🔒 管理」+ 头像双入口（互不冲突）
 - 见 `openspec/changes/archive/admin-nav-entry-20260611/`
+
+## 8. LUT 付费购买（lut-paid-afdian）
+
+付费 LUT 通过**爱发电** (ifdian.net) 完成支付与交付。`paid: true` 的 LUT 在详情页渲染价格徽章 + 购买 CTA，列表卡片显示「付费」角标；下载按钮在付费场景被替换为跳爱发电商品页的购买按钮。
+
+- 前端 frontmatter：`paid: true` + `price: <元>` + `afdianSkuId: <SKU>` + `afdianOrderUrl: <商品页 URL>`（build-time 校验脚本 `script/validate-luts.sh` 强制四件套齐全）
+- 数据库：`luts.paid` / `luts.price_cents` / `luts.afdian_sku_id` / `luts.afdian_order_url` 字段；新增 `paid_lut_orders` 表（`order_no` 唯一约束做幂等，state machine: pending → paid，字段 `dm_sent_at` / `dm_error` 跟踪 DM 兑号）
+- Edge Functions：
+  - `afdian-webhook`（部署时 `--no-verify-jwt`）— 验签（RSA-SHA256，公钥 hardcoded）+ Open API `query-order` 二次校验 + 30 分钟 signed URL + `/api/open/send-msg` DM 兑号
+  - `resend-paid-download` — 管理员补发，5/24h 每买家限流
+  - `manage-lut` 扩展 — 付费字段 upsert
+- 兑号机制：**爱发电 DM**（webhook payload 无 email 字段；用 buyer 的 `user_id` 走 `send-msg` Open API 发 30 分钟 signed URL 文本）
+- 签名位置：爱发电测试工具走 `payload.sign`（body），生产可能走 `sign` header，函数两个位置都读
+- MD5：Web Crypto 不支持 MD5（仅 SHA 家族），`md5()` 用纯 JS RFC 1321 实现
+- Admin 补发队列：`/admin/orders/` 列出 `state='paid' AND dm_sent_at IS NULL` 的订单，一键重新触发 DM
+- 列表「付费」角标：纯文字（不显示价格，避免反复修改）
+- 见 `openspec/changes/archive/lut-paid-afdian-20260615/`

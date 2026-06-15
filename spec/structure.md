@@ -22,3 +22,11 @@
 - 加载更多：每页 4 项，类名带前缀（`lut-load-more` / `blog-load-more`）避开主题 `YPRMLoadMore` 插件
 - 标签筛选：`<article data-tags="...">` + `?tag=` 客户端 JS 过滤
 - 文章 URL：`_posts` 用 `.html` 后缀，`_luts` 用目录式
+
+## 付费 LUT 特有约定
+- `_luts/{slug}.md` front matter `paid: true` 时必须填齐 `price` / `afdianSkuId` / `afdianOrderUrl`（build 校验，缺一拒构建）
+- 详情页 `_layouts/lut.html` 用 `{% if page.paid %}` 分支：渲染 `#lut-purchase-cta`（价格徽章 + 购买按钮），不渲染 `#lut-download-cta`（下载按钮）
+- 列表角标 `.lut-card-paid-badge` 仅显示「付费」二字，不显示价格
+- Supabase secrets：`AFDIAN_USER_ID` / `AFDIAN_TOKEN`（不入 `.env` 本地文件）
+- Edge Function `afdian-webhook` 部署必须带 `--no-verify-jwt`（服务对服务无 JWT）
+- Edge Function 目录结构（`supabase/functions/{name}/index.ts` 单文件风格）

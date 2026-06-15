@@ -11,12 +11,17 @@
  *   lutId: string (uuid),
  *   confirm?: true  // required for delete
  *   // update-only, all optional:
- *   title?:       string  (1-80 chars)
- *   description?: string  (1-500 chars)
- *   tags?:        string[]  (0-5 entries, each <=16 chars)
- *   slug?:        string  (1-60 chars; storage_path is keyed on the row
- *                          id, so renaming the slug never relocates the
- *                          .cube file)
+ *   title?:          string  (1-80 chars)
+ *   description?:    string  (1-500 chars)
+ *   tags?:           string[]  (0-5 entries, each <=16 chars)
+ *   slug?:           string  (1-60 chars; storage_path is keyed on the row
+ *                             id, so renaming the slug never relocates the
+ *                             .cube file)
+ *   paid?:           boolean  // true ⇒ paid-only LUT,详情页渲染购买 CTA
+ *   priceCents?:     int      // 分 (cents),> 0 时前端显示 ¥<price_cents/100>
+ *   afdianSkuId?:    string|null  // 爱发电 sku_id,与 webhook 推送的
+ *                                    sku_detail[0].sku_id 匹配
+ *   afdianOrderUrl?: string|null  // 爱发电商品页 URL,"前往购买"跳转目标
  * }
  * Headers: Authorization: Bearer <admin JWT>
  *
@@ -97,6 +102,10 @@ interface LutRow {
   description: string;
   tags: string[];
   storage_path: string;
+  paid: boolean;
+  price_cents: number | null;
+  afdian_sku_id: string | null;
+  afdian_order_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -167,6 +176,10 @@ interface UpdateFields {
   description?: string;
   tags?: string[];
   slug?: string;
+  paid?: boolean;
+  priceCents?: number;
+  afdianSkuId?: string | null;
+  afdianOrderUrl?: string | null;
 }
 
 function parseUpdateFields(
@@ -211,6 +224,40 @@ function parseUpdateFields(
     out.slug = s;
     any = true;
   }
+  if (body.paid !== undefined) {
+    if (typeof body.paid !== "boolean") return { ok: false };
+    out.paid = body.paid;
+    any = true;
+  }
+  if (body.priceCents !== undefined) {
+    if (typeof body.priceCents !== "number") return { ok: false };
+    if (!Number.isInteger(body.priceCents) || body.priceCents < 0) {
+      return { ok: false };
+    }
+    out.priceCents = body.priceCents;
+    any = true;
+  }
+  if (body.afdianSkuId !== undefined) {
+    if (body.afdianSkuId !== null && typeof body.afdianSkuId !== "string") {
+      return { ok: false };
+    }
+    if (typeof body.afdianSkuId === "string" && body.afdianSkuId.length === 0) {
+      return { ok: false };
+    }
+    out.afdianSkuId = body.afdianSkuId;
+    any = true;
+  }
+  if (body.afdianOrderUrl !== undefined) {
+    if (
+      body.afdianOrderUrl !== null && typeof body.afdianOrderUrl !== "string"
+    ) return { ok: false };
+    if (
+      typeof body.afdianOrderUrl === "string" &&
+      body.afdianOrderUrl.length === 0
+    ) return { ok: false };
+    out.afdianOrderUrl = body.afdianOrderUrl;
+    any = true;
+  }
 
   if (!any) return { ok: false }; // nothing to do
   return { ok: true, value: out };
@@ -225,7 +272,9 @@ async function handleUpdate(
   // 1. Load current row.
   const { data: current, error: curErr } = await admin
     .from("luts")
-    .select("id, slug, title, description, tags, storage_path, created_at, updated_at")
+    .select(
+      "id, slug, title, description, tags, storage_path, paid, price_cents, afdian_sku_id, afdian_order_url, created_at, updated_at",
+    )
     .eq("id", lutId)
     .maybeSingle<LutRow>();
 
@@ -258,6 +307,12 @@ async function handleUpdate(
   if (fields.description !== undefined) patch.description = fields.description;
   if (fields.tags !== undefined) patch.tags = fields.tags;
   if (fields.slug !== undefined) patch.slug = fields.slug;
+  if (fields.paid !== undefined) patch.paid = fields.paid;
+  if (fields.priceCents !== undefined) patch.price_cents = fields.priceCents;
+  if (fields.afdianSkuId !== undefined) patch.afdian_sku_id = fields.afdianSkuId;
+  if (fields.afdianOrderUrl !== undefined) {
+    patch.afdian_order_url = fields.afdianOrderUrl;
+  }
 
   // 4. Apply.
   const { data: updated, error: updErr } = await admin
@@ -265,7 +320,7 @@ async function handleUpdate(
     .update(patch)
     .eq("id", lutId)
     .select(
-      "id, slug, title, description, tags, storage_path, created_at, updated_at",
+      "id, slug, title, description, tags, storage_path, paid, price_cents, afdian_sku_id, afdian_order_url, created_at, updated_at",
     )
     .single<LutRow>();
 
