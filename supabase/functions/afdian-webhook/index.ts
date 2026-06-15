@@ -6,10 +6,10 @@
  * download URL to the buyer via Afdian DM (/api/open/send-msg).
  *
  * POST  /functions/v1/afdian-webhook
- * Headers:
- *   sign:       base64(RSA-SHA256(sign_str, afdian-private-key))   2025-07-01+
+ * Headers (Afdian docs say 2025-07-01+ uses header):
+ *   sign:       base64(RSA-SHA256(sign_str, afdian-private-key))
  *   Content-Type: application/json
- * Body (decoded):
+ * Body (decoded; Afdian test tool also puts sign here):
  *   {
  *     "ec": 200, "em": "ok",
  *     "data": {
@@ -18,15 +18,19 @@
  *         "out_trade_no": "...", "user_id": "...", "plan_id": "...",
  *         "total_amount": "5.00", "status": 2, "product_type": 1,
  *         "sku_detail": [{ "sku_id": "..." }], ...
- *       }
- *     }
+ *       },
+ *      "sign": "<base64>"
+ *     },
  *   }
+ *
+ * Sign location: body first, header as fallback (covers both Afdian
+ * test tool and any 2025-07-01+ header-based push).
  *
  * Returns:  { ec: <int>, em: <string> }   (Afdian treats non-200 as failure)
  *   200 { ec: 200, em: "" }               — accepted (DM may still fail internally)
  *   200 { ec: 200, em: "" }               — duplicate webhook (idempotent)
  *   400 { ec: 400, em: "invalid signature" }
- *   400 { ec: 400, em: "missing sign header" }
+ *   400 { ec: 400, em: "missing sign" }
  *   400 { ec: 400, em: "malformed payload" }
  *   402 { ec: 402, em: "order not paid" } — Open API second-check failed
  *   404 { ec: 404, em: "unknown sku" }
@@ -106,6 +110,7 @@ interface WebhookPayload {
   data: {
     type: string;
     order: WebhookOrder;
+    sign?: string;
   };
 }
 
@@ -204,13 +209,15 @@ Deno.serve(async (req) => {
   }
 
   // -- 3. Verify signature
-  const signHeader = req.headers.get("sign");
-  if (!signHeader) {
-    return jsonResponse(200, { ec: 400, em: "missing sign header" });
+  // Afdian test tool puts sign in body; docs say header (2025-07-01+).
+  // Read body first, fall back to header.
+  const signValue = payload.data.sign ?? req.headers.get("sign");
+  if (!signValue) {
+    return jsonResponse(200, { ec: 400, em: "missing sign" });
   }
   const signOk = await verifyAfdianSign(
     rawBody,
-    signHeader,
+    signValue,
     order.out_trade_no,
     order.user_id,
     order.plan_id,
@@ -358,7 +365,7 @@ function jsonResponse(status: number, body: Record<string, unknown>): Response {
 
 async function verifyAfdianSign(
   rawBody: string,
-  signHeader: string,
+  signValue: string,
   outTradeNo: string,
   userId: string,
   planId: string,
@@ -389,11 +396,11 @@ async function verifyAfdianSign(
     return false;
   }
 
-  // signHeader is base64. We deliberately *don't* URL-decode it — Afdian
-  // sends raw base64 in the header.
+  // signValue is base64. We deliberately *don't* URL-decode it — Afdian
+  // sends raw base64 (in either body or header).
   let signature: Uint8Array;
   try {
-    signature = base64ToBytes(signHeader);
+    signature = base64ToBytes(signValue);
   } catch {
     return false;
   }
@@ -427,22 +434,102 @@ function base64ToBytes(b64: string): Uint8Array {
  *
  * See design.md §4 / 爱发电 docs "签名介绍".
  */
-async function afdianSign(
+function afdianSign(
   token: string,
   userId: string,
   params: string,
   ts: number,
-): Promise<string> {
+): string {
   const kv = `params${params}ts${ts}user_id${userId}`;
-  const buf = new TextEncoder().encode(`${token}${kv}`);
-  const digest = await crypto.subtle.digest("MD5", buf);
-  return bytesToHex(new Uint8Array(digest));
+  return md5(`${token}${kv}`);
 }
 
-function bytesToHex(bytes: Uint8Array): string {
-  let s = "";
-  for (const b of bytes) s += b.toString(16).padStart(2, "0");
-  return s;
+// ===== Pure-JS MD5 ==========================================================
+// Deno's Web Crypto API only supports the SHA family — `crypto.subtle.digest`
+// rejects "MD5" with NotSupportedError. But Afdian's Open API sign uses MD5,
+// so we implement it inline. Reference: RFC 1321.
+
+const MD5_K = new Int32Array([
+  0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee, 0xf57c0faf, 0x4787c62a,
+  0xa8304613, 0xfd469501, 0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be,
+  0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821, 0xf61e2562, 0xc040b340,
+  0x265e5a51, 0xe9b6c7aa, 0xd62f105d, 0x02441453, 0xd8a1e681, 0xe7d3fbc8,
+  0x21e1cde6, 0xc33707d6, 0xf4d50d87, 0x455a14ed, 0xa9e3e905, 0xfcefa3f8,
+  0x676f02d9, 0x8d2a4c8a, 0xfffa3942, 0x8771f681, 0x6d9d6122, 0xfde5380c,
+  0xa4beea44, 0x4bdecfa9, 0xf6bb4b60, 0xbebfbc70, 0x289b7ec6, 0xeaa127fa,
+  0xd4ef3085, 0x04881d05, 0xd9d4d039, 0xe6db99e5, 0x1fa27cf8, 0xc4ac5665,
+  0xf4292244, 0x432aff97, 0xab9423a7, 0xfc93a039, 0x655b59c3, 0x8f0ccc92,
+  0xffeff47d, 0x85845dd1, 0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
+  0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391,
+]);
+
+const MD5_S = [
+  7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
+  5,  9, 14, 20, 5,  9, 14, 20, 5,  9, 14, 20, 5,  9, 14, 20,
+  4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
+  6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
+];
+
+function md5(input: string): string {
+  const bytes = Array.from(new TextEncoder().encode(input));
+  const origLen = bytes.length;
+  bytes.push(0x80);
+  while (bytes.length % 64 !== 56) bytes.push(0);
+  const bitLen = origLen * 8;
+  for (let i = 0; i < 4; i++) bytes.push((bitLen >>> (i * 8)) & 0xff);
+  for (let i = 0; i < 4; i++) bytes.push(0);
+
+  let a = 0x67452301, b = 0xefcdab89, c = 0x98badcfe, d = 0x10325476;
+  const add32 = (x: number, y: number) => (x + y) | 0;
+  const rol = (x: number, n: number) => (x << n) | (x >>> (32 - n));
+  const F = (x: number, y: number, z: number) => (x & y) | (~x & z);
+  const G = (x: number, y: number, z: number) => (x & z) | (y & ~z);
+  const H = (x: number, y: number, z: number) => x ^ y ^ z;
+  const I = (x: number, y: number, z: number) => y ^ (x | ~z);
+
+  for (let i = 0; i < bytes.length; i += 64) {
+    const M: number[] = new Array(16);
+    for (let j = 0; j < 16; j++) {
+      M[j] = (bytes[i + j * 4] | 0) +
+        ((bytes[i + j * 4 + 1] | 0) << 8) +
+        ((bytes[i + j * 4 + 2] | 0) << 16) +
+        ((bytes[i + j * 4 + 3] | 0) << 24);
+    }
+    let A = a, B = b, C = c, D = d;
+    for (let j = 0; j < 64; j++) {
+      let f: number, g: number;
+      if (j < 16) { f = F(B, C, D); g = j; }
+      else if (j < 32) { f = G(B, C, D); g = (5 * j + 1) % 16; }
+      else if (j < 48) { f = H(B, C, D); g = (3 * j + 5) % 16; }
+      else { f = I(B, C, D); g = (7 * j) % 16; }
+      const temp = D;
+      D = C;
+      C = B;
+      B = add32(
+        B,
+        rol(
+          add32(add32(A, f), add32(M[g]!, MD5_K[j]!)),
+          MD5_S[j]!,
+        ),
+      );
+      A = temp;
+    }
+    a = add32(a, A);
+    b = add32(b, B);
+    c = add32(c, C);
+    d = add32(d, D);
+  }
+
+  // 32-bit words -> little-endian hex (MD5 output is conventionally LE-hex).
+  const toHex = (n: number): string => {
+    let s = "";
+    for (let i = 0; i < 4; i++) {
+      s += ((n >> (i * 8 + 4)) & 0x0f).toString(16) +
+        ((n >> (i * 8)) & 0x0f).toString(16);
+    }
+    return s;
+  };
+  return toHex(a) + toHex(b) + toHex(c) + toHex(d);
 }
 
 async function openApiCall<T>(
@@ -453,7 +540,7 @@ async function openApiCall<T>(
 ): Promise<{ ok: boolean; status: number; data: T | null; error?: string }> {
   const paramsStr = JSON.stringify(params);
   const ts = Math.floor(Date.now() / 1000);
-  const sign = await afdianSign(token, userId, paramsStr, ts);
+  const sign = afdianSign(token, userId, paramsStr, ts);
 
   let res: Response;
   try {

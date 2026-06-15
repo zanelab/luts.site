@@ -5,8 +5,8 @@ date: 2026-06-15 16:00:00 +0800
 lutId: TBD-paid-smoke-test
 paid: true
 price: 1
-afdianSkuId: TBD-PAID-SMOKE-SKU
-afdianOrderUrl: https://ifdian.net/a/TBD
+afdianSkuId: f1316b08689511f19efc52540025c377
+afdianOrderUrl: https://ifdian.net/item/f1316b08689511f19efc52540025c377
 excerpt: "用于验证爱发电付费 LUT 流程的冒烟测试 LUT。正式部署前需要将 afdianSkuId 和 afdianOrderUrl 替换为爱发电后台真实值。"
 beforeImg: /assets/images/luts/paid-smoke-test/before.jpg
 afterImg: /assets/images/luts/paid-smoke-test/after.jpg
