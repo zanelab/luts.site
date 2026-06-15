@@ -4,8 +4,8 @@ title: 模拟复古电影胶片风格的 LUT
 date: 2026-06-15 11:25:00 +0800
 lutId: 5c0ebd6f-87f1-48c3-b714-33ea035efa56
 excerpt: "通过调整亮度、对比度、色相和饱和度，模仿老式电影或胶片的色彩表现（如暗部偏青、亮部偏暖、高光轻微泛黄等）。"
-beforeImg: /assets/images/luts/foliage/before.jpg
-afterImg: /assets/images/luts/foliage/after.jpg
+beforeImg: /assets/images/luts/retro-frame/before.jpg
+afterImg: /assets/images/luts/retro-frame/after.jpg
 tags:
   - 电影感
   - 胶片模拟
