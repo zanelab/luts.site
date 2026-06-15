@@ -122,11 +122,10 @@ body_class: lut-detail-page wp-singular page-template page-template-template-lan
             <!-- Download / Purchase CTA -->
             {% if page.paid %}
             <div id="lut-purchase-cta" class="widget widget-lut-purchase">
-              <span class="lut-price-badge">¥{{ page.price }}</span>
               <a class="lut-purchase-trigger" href="{{ page.afdianOrderUrl }}"
                  target="_blank" rel="noopener noreferrer">
                 <i class="solid-icon-shopping-cart"></i>
-                <span>前往购买</span>
+                <span>(¥{{ page.price }}) 前往购买</span>
               </a>
               <p class="lut-purchase-hint">购买后请到爱发电「我的私信」查收下载链接，链接 30 分钟内有效。</p>
             </div>
