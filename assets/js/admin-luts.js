@@ -217,6 +217,7 @@
     els.status.textContent = '';
     els.status.className = 'lut-admin-drawer-status';
     updatePaidSectionUi();
+    updateUrlPreview();
     updateValidationUi();
     els.saveBtn.disabled = false;
   }
@@ -231,6 +232,10 @@
     if (els.editPrice) els.editPrice.value = '';
     if (els.editSku) els.editSku.value = '';
     if (els.editUrl) els.editUrl.value = '';
+    if (els.editUrlPreview) {
+      els.editUrlPreview.hidden = true;
+      els.editUrlPreview.removeAttribute('href');
+    }
     clearPaidFieldErrors();
   }
 
@@ -248,7 +253,13 @@
     fields.forEach(function (f) {
       var input = els['edit' + f];
       var hint = els['edit' + f + 'Hint'];
-      if (input) input.classList.remove('is-invalid');
+      if (input) {
+        input.classList.remove('is-invalid');
+        // For inputs wrapped in .lut-admin-input-group (price, url),
+        // also clear invalid state on the wrapper so the whole unit goes red.
+        var wrap = input.closest('.lut-admin-input-group');
+        if (wrap) wrap.classList.remove('is-invalid');
+      }
       if (hint) hint.textContent = '';
     });
   }
@@ -320,11 +331,18 @@
       var input = els['edit' + fmap[k]];
       var hint = els['edit' + fmap[k] + 'Hint'];
       if (!input || !hint) return;
-      if (r.errors[k]) {
+      var invalid = !!r.errors[k];
+      if (invalid) {
         input.classList.add('is-invalid');
+        // For inputs wrapped in .lut-admin-input-group (price, url),
+        // also flag the wrapper so its border + background go red.
+        var wrap = input.closest('.lut-admin-input-group');
+        if (wrap) wrap.classList.add('is-invalid');
         hint.textContent = r.errors[k];
       } else {
         input.classList.remove('is-invalid');
+        var wrap2 = input.closest('.lut-admin-input-group');
+        if (wrap2) wrap2.classList.remove('is-invalid');
         hint.textContent = '';
       }
     });
@@ -333,6 +351,19 @@
       // length-based validation in saveEdit handles the rest. The drawer
       // starts enabled and is disabled only if paid fields are invalid.
       els.saveBtn.disabled = !r.ok;
+    }
+  }
+
+  // Show the "↗ 预览" link iff the URL passes the same regex used by validation.
+  function updateUrlPreview() {
+    if (!els.editUrl || !els.editUrlPreview) return;
+    var url = (els.editUrl.value || '').trim();
+    if (/^https:\/\/ifdian\.net\//.test(url)) {
+      els.editUrlPreview.href = url;
+      els.editUrlPreview.hidden = false;
+    } else {
+      els.editUrlPreview.hidden = true;
+      els.editUrlPreview.removeAttribute('href');
     }
   }
 
@@ -590,7 +621,10 @@
     }
     if (els.editPrice) els.editPrice.addEventListener('input', updateValidationUi);
     if (els.editSku) els.editSku.addEventListener('input', updateValidationUi);
-    if (els.editUrl) els.editUrl.addEventListener('input', updateValidationUi);
+    if (els.editUrl) els.editUrl.addEventListener('input', function () {
+      updateValidationUi();
+      updateUrlPreview();
+    });
     if (els.retry) els.retry.addEventListener('click', loadList);
   }
 
@@ -699,6 +733,7 @@
     els.editPriceHint = $('lut-admin-edit-price-hint');
     els.editSkuHint = $('lut-admin-edit-sku-hint');
     els.editUrlHint = $('lut-admin-edit-url-hint');
+    els.editUrlPreview = $('lut-admin-edit-url-preview');
     els.paidFields = $('lut-admin-paid-fields');
     els.saveBtn = $('lut-admin-save-btn');
     els.status = $('lut-admin-drawer-status');
