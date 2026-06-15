@@ -2,6 +2,51 @@
 
 > 按时间倒序记录，每次 archive 追加一节。
 
+## 2026-06-15 — LUT 付费购买（lut-paid-afdian）
+
+### 摘要
+付费 LUT 通过爱发电（ifdian.net）完成支付与交付。`paid: true` 的 LUT 在详情页渲染价格徽章 + 购买 CTA，列表卡片显示「付费」角标；下载按钮在付费场景下被替换为跳爱发电商品页的购买按钮。爱发电 webhook 推单后做验签 + Open API 二次校验，通过 `send-msg` DM 把 30 分钟 signed URL 发给买家。Admin 侧提供 DM 补发队列。
+
+### 变更
+- `supabase/migrations/20260615000000_paid_lut_orders.sql` — 新表 `paid_lut_orders`（`order_no` 唯一约束做幂等，`state` 状态机，`dm_sent_at` / `dm_error` 跟踪兑号），`luts` 表加 4 个付费字段
+- `supabase/functions/afdian-webhook/index.ts` — 单文件 Edge Function，部署带 `--no-verify-jwt`：RSA-SHA256 验签（公钥 hardcoded）→ Open API 二次校验 → 按 `afdian_sku_id` 查 LUT → 30 分钟 signed URL → `send-msg` DM 兑号 → upsert 订单
+- `supabase/functions/resend-paid-download/index.ts` — Admin 补发，Bearer JWT 校验 + 5/24h 每买家限流
+- `supabase/functions/manage-lut/index.ts` — 扩展付费字段 upsert
+- `_layouts/lut.html` — `{% if page.paid %}` 条件块：`#lut-purchase-cta` 价格徽章 + 购买按钮 + 提示文案；`.lut-purchase-trigger` 与 `.lut-download-trigger` 共用同一下载流程脚本
+- `lut-list/index.html` — 卡片右上角「付费」角标（纯文字，pointer-events: none，不影响卡片交互）
+- `admin/orders.html` + `assets/js/admin-orders.js` — DM 补发队列（`state='paid' AND dm_sent_at IS NULL`），与 `/admin/submissions/` 共用 admin 鉴权模式
+- `_includes/components/auth-nav.html` — admin 顶导加「订单管理」入口
+- `script/validate-luts.sh` — build-time 校验：`paid: true` 的 LUT 必须填齐 `price` / `afdianSkuId` / `afdianOrderUrl`
+- `Makefile` — `build` / `serve` 目标接入 `validate-luts`
+- `.env.example` — 新增爱发电 secrets 章节（`AFDIAN_USER_ID` / `AFDIAN_TOKEN` 走 `supabase secrets`，公钥 hardcoded）
+- `_luts/paid-smoke-test.md` — 冒烟 LUT，build pipeline 端到端验证
+- `openspec/changes/archive/lut-paid-afdian-20260615/` — proposal / design / spec / plan / close-issues
+
+### 关键决策
+- **兑号走 DM 不走 email**：爱发电 webhook payload 没有 email 字段，最自然的兑号通道就是 DM（买家本就在爱发电账号上）
+- **二次校验**：`query-order` Open API 在验签通过后再调一次（防 webhook 私钥泄漏 + 退款 race）
+- **MD5 纯 JS**：Deno Web Crypto 不支持 MD5（W3C 标准只允许 SHA 家族），`afdianSign` 改用 RFC 1321 纯 JS 实现，所有 7 个 RFC 1321 标定向量验证通过
+- **sign 位置兼容**：爱发电测试工具走 body，生产可能走 header，函数同时读 `payload.sign ?? req.headers.get("sign")`
+- **补发机制**：webhook 永远 200 返回（Afdian 协议），DM 失败只把 `dm_error` 写库，admin 通过 `/admin/orders/` 手动补发，避免无限重试浪费 API 配额
+- **限流策略**：补发按 `buyer_user_id` 5 次 / 24h（写在 `lut_download_requests.status='paid_resent'`），跟 free 下载的 5/24h 限流对齐
+- **付费 LUT `lutId` 仍必填**：详情页用 `lutId` 关联 Supabase 行，付费 LUT 跟 free LUT 走同一张 `luts` 表，仅靠 `paid` 字段区分
+
+### 验证
+- 18/18 plan items 通过
+- 端到端 build：`make build` 通过，paid LUT 详情页渲染 `#lut-purchase-cta` + `¥1` 价格徽章 + 购买按钮；free LUT 行为不变
+- 列表卡片：搜索 `lut-card-paid-badge` 出现 2 次（首屏 + 加载更多模板）
+- 爱发电测试 webhook 工具验证到 MD5 二次校验（Open API 调用前卡住——见下方 hotfix）
+- 部署时 `--no-verify-jwt` 必须带（webhook 走 service-to-service 不带 JWT）
+
+### 验证阶段 hotfix
+部署到 Supabase 后暴露 2 个 bug：
+1. `sign` 读 header 一直 400 — 爱发电测试工具把 sign 放 body。改成 `payload.sign ?? headers.get("sign")`
+2. `crypto.subtle.digest("MD5", ...)` 抛 `NotSupportedError` — Deno Web Crypto 不支持 MD5。换纯 JS 实现
+
+### 链接
+- Branch: `feature/lut-paid-afdian-20260615`
+- Commits: `3baf7bc`（主体）→ `0e8ef06`（hotfix：sign + MD5 + auth-nav + SKU）
+
 ## 2026-06-11 — Admin 顶导登录入口（admin-nav-entry）
 
 ### 摘要

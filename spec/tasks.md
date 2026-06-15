@@ -24,3 +24,15 @@
 - [x] `/admin/submissions/` 审批队列
 - [x] Admin OTP 登录（顶导两步 OTP 模态，取代 magic link）
 - [x] Admin 顶导登录入口（「🔒 管理」文字链接，公开页可见，admin 页自动弹模态）
+
+## v4 — 付费 LUT 购买（爱发电）
+- [x] `paid_lut_orders` 表 + `luts` 表 4 个付费字段
+- [x] Edge Function `afdian-webhook`（RSA 验签 + Open API 二次校验 + DM 兑号）
+- [x] Edge Function `resend-paid-download`（admin 补发 + 5/24h 限流）
+- [x] Edge Function `manage-lut` 扩展付费字段
+- [x] 详情页付费 CTA（价格徽章 + 购买按钮）
+- [x] 列表卡片「付费」角标
+- [x] `/admin/orders/` DM 补发队列
+- [x] Build-time frontmatter 校验（`script/validate-luts.sh`）
+- [x] 部署 `--no-verify-jwt`（webhook 走 service-to-service）
+- [x] MD5 纯 JS 实现（绕开 Deno Web Crypto 限制）
