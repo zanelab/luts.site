@@ -78,3 +78,15 @@
 - Admin 补发队列：`/admin/orders/` 列出 `state='paid' AND dm_sent_at IS NULL` 的订单，一键重新触发 DM
 - 列表「付费」角标：纯文字（不显示价格，避免反复修改）
 - 见 `openspec/changes/archive/lut-paid-afdian-20260615/`
+
+## 9. Admin 后台 LUT 付费字段编辑（admin-lut-paid-fields）
+
+`/admin/luts/` 编辑抽屉扩 4 个付费字段（`paid` 开关 + `price` 元 + `afdianSkuId` + `afdianOrderUrl`），admin 可在不动 SQL 的情况下把任意 LUT 标成付费；保存路径复用 `manage-lut`（PR #9 已支持）。
+
+- 编辑抽屉：4 个付费字段在 `paid` 开关下排开，关闭时三字段变灰
+- 校验：勾 `paid` 时三字段必填；SKU 必须匹配 `/^[a-zA-Z0-9]{8,64}$/`；URL 必须以 `https://ifdian.net/` 开头
+- 列表角标：免费显示「免费」灰字，付费显示「付费 ¥X.XX」金底
+- 投稿页 admin 直接发布 checkbox 同步美化为 iOS 风格开关（亮色主题）
+- 保存成功以**后端返回的 `lut` 行**为本地 state 来源（避免旧版 `manage-lut` 静默丢弃付费字段时 UI 与 DB 漂移）
+- 部署依赖：PR #9 的 `manage-lut` 必须已部署到目标 Supabase 项目，否则列表读 `r.paid` 为 undefined → 全部降级为「免费」角标
+- 见 `openspec/changes/archive/admin-lut-paid-fields-20260615/`

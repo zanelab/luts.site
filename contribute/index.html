@@ -80,9 +80,12 @@ description: 贡献一个 .cube 调色文件。审核通过后将出现在 LUT �
     </div>
 
     <div class="lut-contribute-field lut-contribute-direct" id="lut-contribute-direct-wrap" hidden>
-      <label>
+      <label class="lut-contribute-switch" for="lut-contribute-direct">
         <input type="checkbox" id="lut-contribute-direct" />
-        直接发布（仅管理员，跳过审批队列）
+        <span class="lut-contribute-switch-track" aria-hidden="true">
+          <span class="lut-contribute-switch-knob"></span>
+        </span>
+        <span class="lut-contribute-switch-label">直接发布（仅管理员，跳过审批队列）</span>
       </label>
     </div>
 
@@ -123,8 +126,61 @@ description: 贡献一个 .cube 调色文件。审核通过后将出现在 LUT �
   }
   .lut-mine-badge.pending { color: #856404; }
   .lut-contribute-field { margin-bottom: 20px; }
-  .lut-contribute-field label { display: block; font-weight: 600; margin-bottom: 6px; }
+  .lut-contribute-field label { display: flex; font-weight: 600; margin-bottom: 6px; }
   .lut-contribute-field .req { color: #c00; }
+
+  /* iOS-style switch (light theme) — used for "直接发布" admin toggle */
+  .lut-contribute-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 600;
+  }
+  .lut-contribute-switch input[type="checkbox"] {
+    position: absolute; opacity: 0; width: 0; height: 0;
+    pointer-events: none;
+  }
+  .lut-contribute-switch-track {
+    position: relative;
+    display: inline-block;
+    width: 44px; height: 24px;
+    background: #333;
+    border: 1px solid #5f5f5f;
+    border-radius: 999px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+    flex-shrink: 0;
+  }
+  .lut-contribute-switch-knob {
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 18px; height: 18px;
+    background: #888;
+    border-radius: 50%;
+    transition: transform 0.2s ease, background 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  }
+  .lut-contribute-switch input[type="checkbox"]:checked + .lut-contribute-switch-track {
+    background: #c98a17;
+    border-color: #c98a17;
+  }
+  .lut-contribute-switch input[type="checkbox"]:checked + .lut-contribute-switch-track .lut-contribute-switch-knob {
+    transform: translateX(20px);
+    background: #fff;
+  }
+  .lut-contribute-switch input[type="checkbox"]:focus-visible + .lut-contribute-switch-track {
+    box-shadow: 0 0 0 3px rgba(201,138,23,0.35);
+  }
+  .lut-contribute-switch-label {
+    font-weight: 600;
+    font-size: 14px;
+    color: #4a4a4a;
+    transition: color 0.2s ease;
+  }
+  .lut-contribute-switch input[type="checkbox"]:checked ~ .lut-contribute-switch-label {
+    color: #95680d;
+  }
   
   .lut-contribute-field input[type="file"] { font: inherit; }
 

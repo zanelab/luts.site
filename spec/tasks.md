@@ -36,3 +36,4 @@
 - [x] Build-time frontmatter 校验（`script/validate-luts.sh`）
 - [x] 部署 `--no-verify-jwt`（webhook 走 service-to-service）
 - [x] MD5 纯 JS 实现（绕开 Deno Web Crypto 限制）
+- [x] Admin 后台 LUT 编辑表单扩付费字段（`/admin/luts/` 抽屉）

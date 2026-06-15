@@ -57,6 +57,40 @@ admin_script: admin-luts
         <input type="text" id="lut-admin-edit-tags" maxlength="120" placeholder="逗号分隔，最多 5 个，每个 ≤ 16 字" />
         <p class="lut-admin-form-help">例：<code>阴影提升, 暖色调, 胶片感</code></p>
 
+        <div class="lut-admin-paid-section">
+          <label class="lut-admin-switch">
+            <input type="checkbox" id="lut-admin-edit-paid" />
+            <span class="lut-admin-switch-track" aria-hidden="true">
+              <span class="lut-admin-switch-knob"></span>
+            </span>
+            <span class="lut-admin-switch-label">付费 LUT（爱发电）</span>
+          </label>
+          <p class="lut-admin-form-help">勾选后下方三个字段必填。爱发电推单后会按 SKU 自动 DM 买家下载链接。</p>
+
+          <div class="lut-admin-paid-fields" id="lut-admin-paid-fields">
+            <label for="lut-admin-edit-price">价格</label>
+            <div class="lut-admin-input-group">
+              <span class="lut-admin-input-prefix">¥</span>
+              <input type="number" id="lut-admin-edit-price" min="0.01" max="9999" step="0.01" placeholder="5" />
+              <span class="lut-admin-input-suffix">元</span>
+            </div>
+            <p class="lut-admin-form-hint" id="lut-admin-edit-price-hint"></p>
+
+            <label for="lut-admin-edit-sku">爱发电 SKU ID</label>
+            <input type="text" id="lut-admin-edit-sku" maxlength="64" autocomplete="off" placeholder="32 位字母数字" class="lut-admin-input--standalone" />
+            <p class="lut-admin-form-hint" id="lut-admin-edit-sku-hint"></p>
+
+            <label for="lut-admin-edit-url">爱发电商品页 URL</label>
+            <div class="lut-admin-input-group lut-admin-input-group--url">
+              <input type="url" id="lut-admin-edit-url" maxlength="500" autocomplete="off" placeholder="https://ifdian.net/..." />
+              <a class="lut-admin-input-action" id="lut-admin-edit-url-preview" target="_blank" rel="noopener" hidden>
+                <span aria-hidden="true">↗</span><span>预览</span>
+              </a>
+            </div>
+            <p class="lut-admin-form-hint" id="lut-admin-edit-url-hint"></p>
+          </div>
+        </div>
+
         <div class="lut-admin-drawer-actions">
           <button type="submit" class="btn btn-primary" id="lut-admin-save-btn">保存</button>
         </div>
@@ -113,7 +147,8 @@ admin_script: admin-luts
     transition: border-color 0.2s ease, background 0.2s ease;
   }
   .lut-admin-list--luts li:hover { border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.05); }
-  .lut-admin-list--luts .title { grid-area: title; font-weight: 600; color: #fff; font-size: 15px; }
+  .lut-admin-list--luts .title { grid-area: title; font-weight: 600; color: #fff; font-size: 15px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .lut-admin-list--luts .title .title-text { word-break: break-word; }
   .lut-admin-list--luts .uuid-row {
     grid-area: uuid;
     display: flex; align-items: center; gap: 8px;
@@ -191,7 +226,7 @@ admin_script: admin-luts
   .lut-admin-drawer-meta code { color: #ebb85e; }
 
   .lut-admin-edit-form label {
-    display: block; font-weight: 600; margin: 16px 0 6px;
+    display: flex; font-weight: 600; margin: 16px 0 6px;
     font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;
     color: rgba(255,255,255,0.7);
   }
@@ -224,4 +259,181 @@ admin_script: admin-luts
   .lut-admin-drawer-status { margin-top: 12px; font-size: 14px; min-height: 1.2em; }
   .lut-admin-drawer-status.error { color: #ff8a8a; }
   .lut-admin-drawer-status.ok { color: #6ddc95; }
+
+  /* ---- paid LUT section ---- */
+  .lut-admin-paid-section {
+    margin-top: 24px;
+    padding: 16px;
+    background: rgba(235,184,94,0.04);
+    border: 1px solid rgba(235,184,94,0.18);
+    border-radius: 4px;
+  }
+
+  /* iOS-style switch */
+  .lut-admin-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .lut-admin-switch input[type="checkbox"] {
+    position: absolute; opacity: 0; width: 0; height: 0;
+    pointer-events: none;
+  }
+  .lut-admin-switch-track {
+    position: relative;
+    display: inline-block;
+    width: 44px; height: 24px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 999px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+    flex-shrink: 0;
+  }
+  .lut-admin-switch-knob {
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 18px; height: 18px;
+    background: #f6f6f6;
+    border-radius: 50%;
+    transition: transform 0.2s ease, background 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+  .lut-admin-switch input[type="checkbox"]:checked + .lut-admin-switch-track {
+    background: #ebb85e;
+    border-color: #ebb85e;
+  }
+  .lut-admin-switch input[type="checkbox"]:checked + .lut-admin-switch-track .lut-admin-switch-knob {
+    transform: translateX(20px);
+    background: #95680d;
+  }
+  .lut-admin-switch input[type="checkbox"]:focus-visible + .lut-admin-switch-track {
+    box-shadow: 0 0 0 3px rgba(235,184,94,0.35);
+  }
+  .lut-admin-switch-label {
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255,255,255,0.85);
+  }
+  .lut-admin-switch input[type="checkbox"]:checked ~ .lut-admin-switch-label { color: #ebb85e; }
+
+  /* paid-fields wrapper (greyed when switch is off) */
+  .lut-admin-paid-fields {
+    margin-top: 14px;
+    transition: opacity 0.15s ease;
+  }
+  .lut-admin-paid-fields--disabled { opacity: 0.45; pointer-events: none; }
+
+  /* input group (prefix + input + suffix/action) */
+  .lut-admin-input-group {
+    display: flex;
+    align-items: stretch;
+    background: #0e0e0e;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    transition: border-color 0.15s ease;
+  }
+  .lut-admin-input-group:focus-within { border-color: rgba(255,255,255,0.4); }
+  .lut-admin-input-group.is-invalid { border-color: #ff5a5a; background: rgba(255,90,90,0.06); }
+
+  .lut-admin-input-prefix,
+  .lut-admin-input-suffix {
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 12px;
+    background: rgba(255,255,255,0.04);
+    color: #ebb85e;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+    user-select: none;
+  }
+  .lut-admin-input-prefix { border-right: 1px solid rgba(255,255,255,0.08); }
+  .lut-admin-input-suffix { border-left: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.55); font-weight: 500; font-size: 12px; }
+
+  .lut-admin-input-group input {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    padding: 10px 12px;
+    background: transparent;
+    color: #fff;
+    border: 0;
+    outline: none;
+    font: inherit;
+    font-size: 14px;
+    box-sizing: border-box;
+    -moz-appearance: textfield;
+  }
+  .lut-admin-input-group input::-webkit-outer-spin-button,
+  .lut-admin-input-group input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+  /* standalone input (SKU) — same look as input-group internals but no decorations */
+  .lut-admin-input--standalone {
+    width: 100%; padding: 10px 12px;
+    background: #0e0e0e; color: #fff;
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
+    box-sizing: border-box; font: inherit; font-size: 14px;
+    outline: none; transition: border-color 0.15s ease;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing: 0.02em;
+  }
+  .lut-admin-input--standalone:focus { border-color: rgba(255,255,255,0.4); }
+
+  /* URL group with preview action */
+  .lut-admin-input-group--url { padding-right: 0; }
+  .lut-admin-input-action {
+    display: inline-flex;
+    align-items: center; gap: 4px;
+    padding: 0 14px;
+    color: #ebb85e;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-left: 1px solid rgba(255,255,255,0.08);
+    background: rgba(235,184,94,0.06);
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .lut-admin-input-action:hover { background: #ebb85e; color: #95680d; }
+  .lut-admin-input-action[hidden] { display: none; }
+  .lut-admin-input-action span:first-child { font-size: 14px; line-height: 1; }
+
+  /* form hints & invalid state */
+  .lut-admin-form-hint {
+    font-size: 11px; color: rgba(255,90,90,0.95); margin: 4px 0 0;
+    min-height: 1em;
+  }
+  .lut-admin-form-hint:empty { display: none; }
+
+  .lut-admin-edit-form .lut-admin-input--standalone.is-invalid { border-color: #ff5a5a; background: rgba(255,90,90,0.06); }
+
+  /* ---- list paid badge ---- */
+  .lut-admin-list--luts .paid-badge {
+    display: inline-block;
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .lut-admin-list--luts .paid-badge--free {
+    color: rgba(255,255,255,0.55);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .lut-admin-list--luts .paid-badge--paid {
+    color: #95680d;
+    background: #ebb85e;
+    border: 1px solid #ebb85e;
+  }
+  .lut-admin-list--luts .paid-badge--paid-no-price {
+    color: #ebb85e;
+    background: rgba(235,184,94,0.12);
+    border: 1px solid rgba(235,184,94,0.4);
+  }
 </style>

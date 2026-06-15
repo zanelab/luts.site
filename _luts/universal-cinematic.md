@@ -2,7 +2,7 @@
 layout: lut
 title: Blackmagic Camera 通用电影胶片感的 LUT
 date: 2026-06-15 20:00:00 +0800
-lutId: TBD-paid-smoke-test
+lutId: 02d1fd01-1d69-4d25-9a5e-14b8d2b287d4
 paid: true
 price: 1
 afdianSkuId: f1316b08689511f19efc52540025c377
@@ -11,7 +11,7 @@ excerpt: "将视频素材从一种色彩空间（如 Log、Rec.709）映射到�
 beforeImg: /assets/images/luts/universal-cinematic/before.jpg
 afterImg: /assets/images/luts/universal-cinematic/after.jpg
 tags:
-  - 冒烟测试
+  - 电影风格
 ---
 
 ## 作用
