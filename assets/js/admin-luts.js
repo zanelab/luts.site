@@ -25,6 +25,12 @@
   var MAX_TAGS = 5;
   var MAX_TAG_LEN = 16;
 
+  // LUT columns. Fallback: if PR #9 not merged yet, the luts table doesn't
+  // have paid/price_cents/afdian_sku_id/afdian_order_url, so the query
+  // would 42703 (undefined_column). Retry with COLS_BASIC in that case.
+  var COLS_BASIC = 'id, slug, title, description, tags, created_at, updated_at';
+  var COLS_FULL = COLS_BASIC + ', paid, price_cents, afdian_sku_id, afdian_order_url';
+
   var els = {};
   var state = {
     client: null,
@@ -87,26 +93,53 @@
     }
     hide('lut-admin-empty');
     state.list.forEach(function (r) {
-      var li = document.createElement('li');
-      li.dataset.id = r.id;
-      var tagsArr = Array.isArray(r.tags) ? r.tags : [];
-      li.innerHTML =
-        '<div class="title">' + escapeHtml(r.title) + '</div>' +
-        '<div class="uuid-row">' +
-          '<code>' + escapeHtml(r.id) + '</code>' +
-          '<button type="button" class="copy-btn" data-action="copy" data-id="' + escapeHtml(r.id) + '">复制</button>' +
-        '</div>' +
-        '<div class="meta">' +
-          'slug: <code>' + escapeHtml(r.slug) + '</code>' +
-          ' · 创建 ' + escapeHtml(relativeTime(r.created_at)) +
-          (tagsArr.length ? ' · 标签 ' + escapeHtml(tagsArr.join('、')) : '') +
-        '</div>' +
-        '<div class="actions">' +
-          '<button type="button" class="action-btn" data-action="edit">编辑</button>' +
-          '<button type="button" class="action-btn action-btn--danger" data-action="delete">删除</button>' +
-        '</div>';
-      list.appendChild(li);
+      list.appendChild(buildListItem(r));
     });
+  }
+
+  function buildListItem(r) {
+    var li = document.createElement('li');
+    li.dataset.id = r.id;
+    var tagsArr = Array.isArray(r.tags) ? r.tags : [];
+    li.innerHTML =
+      '<div class="title">' +
+        renderPaidBadge(r) +
+        '<span class="title-text">' + escapeHtml(r.title) + '</span>' +
+      '</div>' +
+      '<div class="uuid-row">' +
+        '<code>' + escapeHtml(r.id) + '</code>' +
+        '<button type="button" class="copy-btn" data-action="copy" data-id="' + escapeHtml(r.id) + '">复制</button>' +
+      '</div>' +
+      '<div class="meta">' +
+        'slug: <code>' + escapeHtml(r.slug) + '</code>' +
+        ' · 创建 ' + escapeHtml(relativeTime(r.created_at)) +
+        (tagsArr.length ? ' · 标签 ' + escapeHtml(tagsArr.join('、')) : '') +
+      '</div>' +
+      '<div class="actions">' +
+        '<button type="button" class="action-btn" data-action="edit">编辑</button>' +
+        '<button type="button" class="action-btn action-btn--danger" data-action="delete">删除</button>' +
+      '</div>';
+    return li;
+  }
+
+  function renderPaidBadge(r) {
+    if (r.paid && typeof r.price_cents === 'number' && r.price_cents > 0) {
+      return '<span class="paid-badge paid-badge--paid">付费 ¥' +
+        (r.price_cents / 100).toFixed(2) + '</span>';
+    }
+    if (r.paid) {
+      return '<span class="paid-badge paid-badge--paid-no-price">付费</span>';
+    }
+    return '<span class="paid-badge paid-badge--free">免费</span>';
+  }
+
+  function patchRowInList(r) {
+    if (!els.list) return;
+    // r.id is a UUID (hex + hyphens), safe for CSS attribute selector.
+    var existing = els.list.querySelector('li[data-id="' + r.id + '"]');
+    if (!existing) return;
+    var fresh = buildListItem(r);
+    existing.replaceWith(fresh);
   }
 
   function listClick(e) {
@@ -168,10 +201,23 @@
     els.editDesc.value = row.description || '';
     var tagsArr = Array.isArray(row.tags) ? row.tags : [];
     els.editTags.value = tagsArr.join(', ');
+    // Paid fields. Coerce defensively — page may have loaded without them
+    // (PR #9 not merged yet → COLS_BASIC path).
+    var paid = !!row.paid;
+    var priceCents = typeof row.price_cents === 'number' ? row.price_cents : null;
+    var sku = row.afdian_sku_id || '';
+    var url = row.afdian_order_url || '';
+    els.editPaid.checked = paid;
+    els.editPrice.value = (priceCents != null && priceCents > 0) ?
+      (priceCents / 100).toFixed(2) : '';
+    els.editSku.value = sku;
+    els.editUrl.value = url;
     updateCount(els.editTitle, els.editTitleCount, MAX_TITLE_LEN);
     updateCount(els.editDesc, els.editDescCount, MAX_DESC_LEN);
     els.status.textContent = '';
     els.status.className = 'lut-admin-drawer-status';
+    updatePaidSectionUi();
+    updateValidationUi();
     els.saveBtn.disabled = false;
   }
 
@@ -179,6 +225,32 @@
     els.drawer.hidden = true;
     els.drawer.setAttribute('aria-hidden', 'true');
     state.current = null;
+    // Clear paid fields so the next open starts blank if state.current
+    // is replaced with a row that has paid=false.
+    if (els.editPaid) els.editPaid.checked = false;
+    if (els.editPrice) els.editPrice.value = '';
+    if (els.editSku) els.editSku.value = '';
+    if (els.editUrl) els.editUrl.value = '';
+    clearPaidFieldErrors();
+  }
+
+  function updatePaidSectionUi() {
+    if (!els.paidFields || !els.editPaid) return;
+    if (els.editPaid.checked) {
+      els.paidFields.classList.remove('lut-admin-paid-fields--disabled');
+    } else {
+      els.paidFields.classList.add('lut-admin-paid-fields--disabled');
+    }
+  }
+
+  function clearPaidFieldErrors() {
+    var fields = ['Price', 'Sku', 'Url'];
+    fields.forEach(function (f) {
+      var input = els['edit' + f];
+      var hint = els['edit' + f + 'Hint'];
+      if (input) input.classList.remove('is-invalid');
+      if (hint) hint.textContent = '';
+    });
   }
 
   function updateCount(input, counter, max) {
@@ -193,6 +265,77 @@
       .filter(Boolean);
   }
 
+  // ---- paid fields validation ---------------------------------------------
+
+  function readPaidInputs() {
+    return {
+      paid: !!(els.editPaid && els.editPaid.checked),
+      priceYuan: els.editPrice ? (parseFloat(els.editPrice.value) || 0) : 0,
+      sku: els.editSku ? (els.editSku.value || '').trim() : '',
+      url: els.editUrl ? (els.editUrl.value || '').trim() : ''
+    };
+  }
+
+  // Returns null if valid, or a string with the first error message
+  // (used by saveEdit to surface a top-of-drawer error).
+  function validatePaidFields() {
+    var v = readPaidInputs();
+    if (!v.paid) return null;
+    if (!(v.priceYuan > 0)) return '付费 LUT 必须填价格';
+    if (!/^[a-zA-Z0-9]{8,64}$/.test(v.sku)) {
+      return '爱发电 SKU 格式不正确（8-64 位字母数字）';
+    }
+    if (!/^https:\/\/ifdian\.net\//.test(v.url)) {
+      return '爱发电商品页 URL 必须以 https://ifdian.net/ 开头';
+    }
+    return null;
+  }
+
+  // Returns { ok: bool, errors: { price?, sku?, url? } } for live UI updates.
+  function validatePaidFieldsDetailed() {
+    var errs = {};
+    var v = readPaidInputs();
+    if (!v.paid) return { ok: true, errors: {} };
+    if (!(v.priceYuan > 0)) {
+      errs.price = '付费 LUT 必须填价格（> 0）';
+    }
+    if (!v.sku) {
+      errs.sku = '必须填爱发电 SKU ID';
+    } else if (!/^[a-zA-Z0-9]{8,64}$/.test(v.sku)) {
+      errs.sku = 'SKU 格式不正确（8-64 位字母数字）';
+    }
+    if (!v.url) {
+      errs.url = '必须填爱发电商品页 URL';
+    } else if (!/^https:\/\/ifdian\.net\//.test(v.url)) {
+      errs.url = '必须是 https://ifdian.net/ 开头的链接';
+    }
+    return { ok: Object.keys(errs).length === 0, errors: errs };
+  }
+
+  function updateValidationUi() {
+    if (!els.editPaid) return;
+    var r = validatePaidFieldsDetailed();
+    var fmap = { price: 'Price', sku: 'Sku', url: 'Url' };
+    Object.keys(fmap).forEach(function (k) {
+      var input = els['edit' + fmap[k]];
+      var hint = els['edit' + fmap[k] + 'Hint'];
+      if (!input || !hint) return;
+      if (r.errors[k]) {
+        input.classList.add('is-invalid');
+        hint.textContent = r.errors[k];
+      } else {
+        input.classList.remove('is-invalid');
+        hint.textContent = '';
+      }
+    });
+    if (els.saveBtn) {
+      // Only the paid fields affect the save button; the existing
+      // length-based validation in saveEdit handles the rest. The drawer
+      // starts enabled and is disabled only if paid fields are invalid.
+      els.saveBtn.disabled = !r.ok;
+    }
+  }
+
   async function loadList() {
     if (!state.client) return;
     if (state.loading) return;
@@ -200,18 +343,43 @@
     try {
       var r = await state.client
         .from('luts')
-        .select('id, slug, title, description, tags, created_at, updated_at')
+        .select(COLS_FULL)
         .order('created_at', { ascending: false })
         .limit(200);
+      if (r.error && looksLikeMissingColumn(r.error)) {
+        // PR #9 not merged yet — fall back to a column set that exists on
+        // main. All paid badges degrade to "免费".
+        r = await state.client
+          .from('luts')
+          .select(COLS_BASIC)
+          .order('created_at', { ascending: false })
+          .limit(200);
+      }
       if (r.error) {
         showError('查询失败：' + r.error.message);
         return;
       }
       state.list = r.data || [];
+      normalizePaidFields(state.list);
       renderList();
     } finally {
       state.loading = false;
     }
+  }
+
+  function looksLikeMissingColumn(err) {
+    if (!err) return false;
+    if (err.code === '42703' || err.code === 'PGRST204') return true;
+    return /column.*does not exist|undefined column/i.test(err.message || '');
+  }
+
+  function normalizePaidFields(list) {
+    list.forEach(function (r) {
+      if (typeof r.paid === 'undefined') r.paid = false;
+      if (typeof r.price_cents === 'undefined') r.price_cents = null;
+      if (typeof r.afdian_sku_id === 'undefined') r.afdian_sku_id = null;
+      if (typeof r.afdian_order_url === 'undefined') r.afdian_order_url = null;
+    });
   }
 
   async function callManage(payload) {
@@ -266,6 +434,19 @@
       return;
     }
 
+    // Read & validate paid fields.
+    var paidIn = readPaidInputs();
+    var paidErr = validatePaidFields();
+    if (paidErr) {
+      setStatus(paidErr, 'error');
+      return;
+    }
+    // Cancellation (paid=false) is allowed to clear all 4 fields.
+    var priceCents = (paidIn.paid && paidIn.priceYuan > 0)
+      ? Math.round(paidIn.priceYuan * 100) : null;
+    var skuVal = (paidIn.paid && paidIn.sku) ? paidIn.sku : null;
+    var urlVal = (paidIn.paid && paidIn.url) ? paidIn.url : null;
+
     state.busy = true;
     els.saveBtn.disabled = true;
     setStatus('保存中…');
@@ -276,7 +457,11 @@
         title: title,
         slug: slug,
         description: description,
-        tags: tags
+        tags: tags,
+        paid: paidIn.paid,
+        priceCents: priceCents,
+        afdianSkuId: skuVal,
+        afdianOrderUrl: urlVal
       });
       if (!r.ok) {
         var code = (r.data && r.data.error) || 'internal';
@@ -287,12 +472,27 @@
         return;
       }
       setStatus('已保存', 'ok');
-      loadList();
+
+      // Update local state so subsequent edits / list badge see new values.
+      var saved = {
+        paid: paidIn.paid,
+        price_cents: priceCents,
+        afdian_sku_id: skuVal,
+        afdian_order_url: urlVal
+      };
+      Object.assign(state.current, saved);
+      var idx = state.list.findIndex(function (x) { return x.id === state.current.id; });
+      if (idx >= 0) {
+        Object.assign(state.list[idx], saved);
+        patchRowInList(state.list[idx]);
+      }
     } catch (err) {
       setStatus('网络异常', 'error');
     } finally {
       state.busy = false;
-      els.saveBtn.disabled = false;
+      // Don't re-enable if validation says it shouldn't be enabled.
+      var v = validatePaidFieldsDetailed();
+      els.saveBtn.disabled = !v.ok;
     }
   }
 
@@ -382,6 +582,15 @@
         updateCount(els.editDesc, els.editDescCount, MAX_DESC_LEN);
       });
     }
+    if (els.editPaid) {
+      els.editPaid.addEventListener('change', function () {
+        updatePaidSectionUi();
+        updateValidationUi();
+      });
+    }
+    if (els.editPrice) els.editPrice.addEventListener('input', updateValidationUi);
+    if (els.editSku) els.editSku.addEventListener('input', updateValidationUi);
+    if (els.editUrl) els.editUrl.addEventListener('input', updateValidationUi);
     if (els.retry) els.retry.addEventListener('click', loadList);
   }
 
@@ -483,6 +692,14 @@
     els.editDesc = $('lut-admin-edit-desc');
     els.editDescCount = $('lut-admin-edit-desc-count');
     els.editTags = $('lut-admin-edit-tags');
+    els.editPaid = $('lut-admin-edit-paid');
+    els.editPrice = $('lut-admin-edit-price');
+    els.editSku = $('lut-admin-edit-sku');
+    els.editUrl = $('lut-admin-edit-url');
+    els.editPriceHint = $('lut-admin-edit-price-hint');
+    els.editSkuHint = $('lut-admin-edit-sku-hint');
+    els.editUrlHint = $('lut-admin-edit-url-hint');
+    els.paidFields = $('lut-admin-paid-fields');
     els.saveBtn = $('lut-admin-save-btn');
     els.status = $('lut-admin-drawer-status');
 
