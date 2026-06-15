@@ -2,6 +2,26 @@
 
 > 按时间倒序记录，每次 archive 追加一节。
 
+## 2026-06-15 — Admin 后台 LUT 付费字段编辑（admin-lut-paid-fields）
+
+### 摘要
+`/admin/luts/` 编辑抽屉扩 4 个付费字段（`paid` 开关 + `price` 元 + `afdian_sku_id` + `afdian_order_url`），admin 可在不动 SQL 的情况下把任意 LUT 标成付费，保存路径复用 `manage-lut`。同时给投稿页 admin 的「直接发布」checkbox 套了同款 iOS 开关（亮色主题）。
+
+### 变更
+- `admin/luts.html` — 编辑表单追加 4 个付费字段；iOS 开关、价格 `¥/元` 输入组、URL `↗ 预览` action；列表角标 `.paid-badge` 样式
+- `assets/js/admin-luts.js` — 列表渲染读 `paid` / `price_cents` 出角标；`COLS_FULL` / `COLS_BASIC` 双重 select（PR #9 未部署时降级）；`updateValidationUi()` / `validatePaidFieldsDetailed()` live 校验；保存走 `manage-lut` + 以返回的 `lut` 行作 state 来源；列表行用 `patchRowInList()` 单行 patch 避免整列重渲
+- `contribute/index.html` — admin 直接发布 checkbox 套 iOS 开关（亮色主题配色）
+- 见 `openspec/changes/archive/admin-lut-paid-fields-20260615/`
+
+### 关键决策
+- **状态来源切到服务端**：`saveEdit` 之前用请求体 patch 本地 state，遇上部署的 `manage-lut` 是 PR #9 之前的旧版本时静默丢付费字段，UI 翻角标 + 显示「已保存」但 DB 没变；改成读 `r.data.lut` 后 UI 跟 DB 永远一致
+- **降级列集**：如果 `manage-lut` 升级到 PR #9 但 `luts` 表迁移没 apply，`select(COLS_FULL)` 报 `42703`，catch 后回退到 `COLS_BASIC` 重查；列表全显示「免费」但不抛错
+- **iOS 开关亮 vs 暗**：admin 深色用 `#ebb85e`，contribute 亮色用 `#c98a17`；关闭态都不饱和（亮色用暖灰白 `#e8e3d8`，深色用 `rgba(255,255,255,0.12)`），让 on/off 看起来是同色系淡 vs 浓而不是两个不同色
+
+### 已知遗留
+- PR #9 的 `manage-lut` Edge Function 是否已部署到生产 Supabase 未确认；用户在生产跑端到端前需 `supabase functions deploy manage-lut`
+- `_luts/*.md` frontmatter `paid: true` 跟 DB `luts.paid` 仍是两套数据源；当前 spec 不做反向同步，运营改了 .md 还要再去后台改 DB
+
 ## 2026-06-15 — LUT 付费购买（lut-paid-afdian）
 
 ### 摘要
