@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="baidu-site-verification" content="codeva-nV5uN6nQcg" />
     <title>{% if page.title %}{{ page.title }} | {% endif %}{{ site.title }}</title>
-    <meta name="description" content="{{ page.description | default: site.description }}">
+    <meta name="description" content="{{ page.excerpt | default: site.description }}">
 
     <!-- jQuery (loaded first so scripts can use it) -->
     <script src="{{ site.baseurl }}/assets/js/jquery-1.12.4.min.js"></script>
