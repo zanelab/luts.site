@@ -253,27 +253,11 @@ Deno.serve(async (req) => {
   }
 
   // -- 5. Look up LUT by afdian_sku_id
-  console.log("DIAG sku lookup start", {
-    skuId,
-    skuIdType: typeof skuId,
-    skuIdLen: skuId.length,
-    skuIdBytes: Array.from(skuId).map((c) => c.charCodeAt(0)),
-  });
   const { data: lut, error: lutErr } = await admin
     .from("luts")
     .select("id, slug, title, storage_path")
     .eq("afdian_sku_id", skuId)
     .maybeSingle<LutRow>();
-  console.log("DIAG sku lookup result", {
-    lut: lut ? { id: lut.id, slug: lut.slug } : null,
-    lutErr: lutErr ? { code: lutErr.code, msg: lutErr.message } : null,
-  });
-  // Cross-check: count rows with this sku via a service-role head query.
-  const { count: cnt, error: cntErr } = await admin
-    .from("luts")
-    .select("id", { count: "exact", head: true })
-    .eq("afdian_sku_id", skuId);
-  console.log("DIAG sku lookup count", { count: cnt, cntErr: cntErr ? cntErr.message : null });
 
   if (lutErr) {
     console.error("lut lookup failed", lutErr);
