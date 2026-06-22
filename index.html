@@ -1,6 +1,6 @@
 ---
 layout: base
-title: Photographer
+title: 3D LUT（三维色彩查找表）
 body_class: home wp-singular page-template page-template-template-landing page-template-template-landing-php page page-id-263 wp-theme-sansara woocommerce-no-js header-type-left_side header-nav-type-visible_menu header-space-no header-container-container popup_download_yes project_details_yes wrap_lines_no mobile_no site-dark chrome osx wpb-js-composer js-comp-ver-6.6.0 vc_responsive
 ---
 
@@ -25,37 +25,10 @@ body_class: home wp-singular page-template page-template-template-landing page-t
 
             <!-- Full page scroll area wrapper -->
             <div class="full-screen-area fc-area-5b1a8a9d8d2d5 navigation-style1">
-              <div class="fc-top-nav">
-                <div class="container">
-                  <div class="h"></div>
-                  <div class="arrows">
-                    <div class="prev solid-arrow-collection-up-chevron-1"></div>
-                    <div class="next solid-arrow-collection-down-chevron-1"></div>
-                  </div>
-                </div>
-              </div>
-              <div class="fc-navigation">
-                <div class="current-line"></div>
-                <ul></ul>
-              </div>
-              <div class="fc-wrap">
-
-                <!-- All sections from homepage.yml -->
-                {% for section in site.data.homepage.sections %}
-                  {% case section.type %}
-                    {% when 'welcome' %}
-                      {% include components/section-welcome.html section=section %}
-                    {% when 'vision' %}
-                      {% include components/section-vision.html section=section %}
-                    {% when 'portfolio' %}
-                      {% include components/section-portfolio.html section=section %}
-                    {% when 'testimonials' %}
-                      {% include components/section-testimonials.html section=section %}
-                    {% when 'about' %}
-                      {% include components/section-about.html section=section %}
-                  {% endcase %}
-                {% endfor %}
-
+              <video class="bg-video" src="{{ '/assets/bg.mp4' | relative_url }}" autoplay loop muted playsinline preload="auto"></video>
+              <div class="bg-overlay">
+                <p class="bg-overlay-desc">{{ site.description }}</p>
+                <a class="bg-overlay-btn" href="{{ '/lut-list/' | relative_url }}">下载调色预设</a>
               </div>
             </div>
 
