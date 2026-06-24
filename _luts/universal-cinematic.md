@@ -8,8 +8,8 @@ price: 1
 afdianSkuId: f1316b08689511f19efc52540025c377
 afdianOrderUrl: https://ifdian.net/item/f1316b08689511f19efc52540025c377
 excerpt: "将视频素材从一种色彩空间（如 Log、Rec.709）映射到另一种风格化色彩（如电影胶片感、复古调等）。为影片统一视觉风格，模拟特定电影质感或创意色调。"
-beforeImg: /assets/images/luts/universal-cinematic/before.jpg
-afterImg: /assets/images/luts/universal-cinematic/after.jpg
+beforeImg: /assets/images/luts/universal-cinematic/before.png
+afterImg: /assets/images/luts/universal-cinematic/after.png
 tags:
   - 电影风格
 ---
